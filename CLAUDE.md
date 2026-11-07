@@ -33,6 +33,7 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 | 公式サイト | https://www.jp.square-enix.com/octopathtraveler_SP/ |
 | 公式 X | https://x.com/OCTOPATH_SP |
 | 主な攻略サイト | https://game8.jp/octopathtraveler-sp |
+| ファンサイト（データベース） | オクトラ書庫 https://octopath.mimoza.jp/ |
 
 ストーリー上の軸として **富（所有）・権力（支配）・名声（承認）** の 3 つの「影響力」があり、キャラクターにもいずれかの影響力タイプが付きます。
 
@@ -139,3 +140,7 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
   - おすすめ編成: https://game8.jp/octopathtraveler-sp/795621
   - ジョブの特徴: https://game8.jp/octopathtraveler-sp/354410
   - 必殺技: https://game8.jp/octopathtraveler-sp/406185
+- オクトラ書庫（有志運営のデータベース・攻略サイト）: https://octopath.mimoza.jp/
+  - 旅人（キャラ）一覧とステータス・スキル検索、バトルアビリティ・必殺技の一覧と火力順検索、支援者・武器・アクセサリー一覧、必殺技の火力計算、バフ・デバフ解説。
+  - **「行動チャート - パーティー紹介」** という、編成とターンごとの行動を管理・共有する機能があり、本プロジェクトの先行事例にあたる。レシピの表現形式や UI を検討するときの参考にする。
+  - キャラ・アビリティのマスターデータを整備する際の照合元としても有用。ただしサイト自身が未入力項目の存在を明記しており、公式情報ではない。
