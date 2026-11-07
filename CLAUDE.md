@@ -13,7 +13,7 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 - コミットログは日本語ベースで書くこと
 - コミットログには「何を変更したか」だけを書くこと。「レビュー指摘に対応した」のような変更のきっかけは書かない
 - 1つのコミットには1種類の変更内容だけを含めること。内容が明らかに異なる変更が複数ある場合は、レビュー対応であってもコミットを分ける
-- 改修の完了判断は `npm run lint` と `npx tsc --noEmit` で行うこと（テストランナーを導入したら `npm run test` も加える）
+- 改修の完了判断は `npm run lint`、`npx tsc --noEmit`、`npm run test`、`npm run format:check` の 4 つがすべて通ることで行うこと
 
 ## プロジェクトの目的
 
@@ -155,8 +155,11 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 
 - Next.js 16.x（App Router）/ React 19 / TypeScript / Tailwind CSS 4
 - `create-next-app` 直後の状態から開始している。Next.js の API は学習データと異なる可能性があるため、コードを書く前に `node_modules/next/dist/docs/` を参照すること（詳細は `AGENTS.md`）。
-- 開発: `npm run dev`、ビルド: `npm run build`、lint: `npm run lint`
+- 開発: `npm run dev`、ビルド: `npm run build`、lint: `npm run lint`、テスト: `npm run test`（Vitest。監視モードは `npm run test:watch`）、整形: `npm run format`（Prettier。チェックのみは `npm run format:check`）
+- CI（GitHub Actions, `.github/workflows/ci.yml`）では Prettier のチェックとテストを実行する。
 - ディレクトリ方針: ルーティングは `app/`、ルーティングに関係しないコードは `lib/` に置く（`src/` は使わない）。パスエイリアスは `@/*` がリポジトリルートを指す。
+- **ドメインロジックは `lib/domain/` に置く**。ゲームルールの計算や判定など、React / Next.js に依存しない純粋な関数をモジュール単位（例: `lib/domain/boost.ts`）で配置し、型は `lib/types.ts` から `import type` で参照する。
+- **ユニットテストは対象モジュールと同じディレクトリに `<module>.test.ts` として並置する**（例: `lib/domain/boost.test.ts`）。
 - **ドメイン型は `lib/types.ts` に集約**している。設計を 1 ファイルで俯瞰する目的で、意図的に分割せず大きなファイル（1000 行超を想定）として保つ。ゲームの概念を型で表すときはまずこのファイルを読み、追加もここに行う。
 
 ## 参考リンク
