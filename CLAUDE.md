@@ -13,11 +13,11 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 - コミットログは日本語ベースで書くこと
 - コミットログには「何を変更したか」だけを書くこと。「レビュー指摘に対応した」のような変更のきっかけは書かない
 - 1つのコミットには1種類の変更内容だけを含めること。内容が明らかに異なる変更が複数ある場合は、レビュー対応であってもコミットを分ける
-- 改修の完了判断は `npm run lint` と `npx tsc --noEmit` で行うこと（テストランナーを導入したら `npm run test` も加える）
+- 改修の完了判断は `npm run lint`、`npx tsc --noEmit`、`npm run test`、`npm run format:check` の 4 つがすべて通ることで行うこと
 
 ## プロジェクトの目的
 
-スマートフォン向け RPG **『OCTOPATH TRAVELER 大陸の覇者』**（通称: オクトラ大陸の覇者、オクトラ覇者。英題: *OCTOPATH TRAVELER: Champions of the Continent*, 略称 COTC）向けの Web ツールです。
+スマートフォン向け RPG **『OCTOPATH TRAVELER 大陸の覇者』**（通称: オクトラ大陸の覇者、オクトラ覇者。英題: _OCTOPATH TRAVELER: Champions of the Continent_, 略称 COTC）向けの Web ツールです。
 
 ユーザーが次の 2 つをまとめた **「レシピ」** を登録・公開できるようにします。
 
@@ -34,18 +34,18 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 
 ## 対象ゲームの基本情報
 
-| 項目 | 内容 |
-| --- | --- |
-| タイトル | OCTOPATH TRAVELER 大陸の覇者 |
-| 発売・運営 | スクウェア・エニックス |
-| プラットフォーム | iOS / Android |
-| ジャンル | シングルプレイ RPG（ターン制コマンドバトル） |
-| 料金 | 基本無料・アイテム課金制 |
-| 日本での正式サービス開始 | 2020 年 10 月 28 日 |
-| 公式サイト | https://www.jp.square-enix.com/octopathtraveler_SP/ |
-| 公式 X | https://x.com/OCTOPATH_SP |
-| 主な攻略サイト | https://game8.jp/octopathtraveler-sp |
-| ファンサイト（データベース） | オクトラ書庫 https://octopath.mimoza.jp/ |
+| 項目                         | 内容                                                |
+| ---------------------------- | --------------------------------------------------- |
+| タイトル                     | OCTOPATH TRAVELER 大陸の覇者                        |
+| 発売・運営                   | スクウェア・エニックス                              |
+| プラットフォーム             | iOS / Android                                       |
+| ジャンル                     | シングルプレイ RPG（ターン制コマンドバトル）        |
+| 料金                         | 基本無料・アイテム課金制                            |
+| 日本での正式サービス開始     | 2020 年 10 月 28 日                                 |
+| 公式サイト                   | https://www.jp.square-enix.com/octopathtraveler_SP/ |
+| 公式 X                       | https://x.com/OCTOPATH_SP                           |
+| 主な攻略サイト               | https://game8.jp/octopathtraveler-sp                |
+| ファンサイト（データベース） | オクトラ書庫 https://octopath.mimoza.jp/            |
 
 ストーリー上の軸として **富（所有）・権力（支配）・名声（承認）** の 3 つの「影響力」があり、キャラクターにもいずれかの影響力タイプが付きます。
 
@@ -96,16 +96,16 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 
 ### ジョブ・武器・レアリティ
 
-| ジョブ | 装備武器 | 典型的な役割 |
-| --- | --- | --- |
-| 剣士 | 剣 | 物理アタッカー |
-| 商人 | 槍 | タンク / 物理アタッカー / サポート |
-| 盗賊 | 短剣 | シールド削り / デバッファー |
-| 薬師 | 斧 | ヒーラー |
-| 狩人 | 弓 | シールド削り |
-| 神官 | 杖 | ヒーラー |
-| 学者 | 本 | 属性アタッカー |
-| 踊子 | 扇 | バッファー / デバッファー |
+| ジョブ | 装備武器 | 典型的な役割                       |
+| ------ | -------- | ---------------------------------- |
+| 剣士   | 剣       | 物理アタッカー                     |
+| 商人   | 槍       | タンク / 物理アタッカー / サポート |
+| 盗賊   | 短剣     | シールド削り / デバッファー        |
+| 薬師   | 斧       | ヒーラー                           |
+| 狩人   | 弓       | シールド削り                       |
+| 神官   | 杖       | ヒーラー                           |
+| 学者   | 本       | 属性アタッカー                     |
+| 踊子   | 扇       | バッファー / デバッファー          |
 
 - キャラのレアリティは ★3 / ★4 / ★5。各キャラは 1 ジョブ・1 影響力タイプ（富 / 権力 / 名声）を持つ。
 - キャラ数はサービス開始時 64 名、以降追加され続けている（限定キャラ、EX 版キャラなども存在）。
@@ -155,8 +155,11 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 
 - Next.js 16.x（App Router）/ React 19 / TypeScript / Tailwind CSS 4
 - `create-next-app` 直後の状態から開始している。Next.js の API は学習データと異なる可能性があるため、コードを書く前に `node_modules/next/dist/docs/` を参照すること（詳細は `AGENTS.md`）。
-- 開発: `npm run dev`、ビルド: `npm run build`、lint: `npm run lint`
+- 開発: `npm run dev`、ビルド: `npm run build`、lint: `npm run lint`、テスト: `npm run test`（Vitest。監視モードは `npm run test:watch`）、整形: `npm run format`（Prettier。チェックのみは `npm run format:check`）
+- CI（GitHub Actions, `.github/workflows/ci.yml`）では Prettier のチェックとテストを実行する。
 - ディレクトリ方針: ルーティングは `app/`、ルーティングに関係しないコードは `lib/` に置く（`src/` は使わない）。パスエイリアスは `@/*` がリポジトリルートを指す。
+- **ドメインロジックは `lib/domain/` に置く**。ゲームルールの計算や判定など、React / Next.js に依存しない純粋な関数をモジュール単位（例: `lib/domain/boost.ts`）で配置し、型は `lib/types.ts` から `import type` で参照する。
+- **ユニットテストは対象モジュールと同じディレクトリに `<module>.test.ts` として並置する**（例: `lib/domain/boost.test.ts`）。
 - **ドメイン型は `lib/types.ts` に集約**している。設計を 1 ファイルで俯瞰する目的で、意図的に分割せず大きなファイル（1000 行超を想定）として保つ。ゲームの概念を型で表すときはまずこのファイルを読み、追加もここに行う。
 
 ## 参考リンク
