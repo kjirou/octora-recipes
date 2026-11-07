@@ -20,6 +20,29 @@
 // 1. 基本の列挙型
 // =============================================================================
 
+/** 武器種（物理攻撃の種別）。剣・槍・短剣・斧・弓・杖・本・扇の 8 種。 */
+export type Weapon =
+  "axe" | "book" | "bow" | "dagger" | "fan" | "spear" | "staff" | "sword";
+
+/** 属性。火・氷・雷・風・光・闇の 6 種。 */
+export type Element = "dark" | "fire" | "ice" | "light" | "lightning" | "wind";
+
+/** 攻撃種別（14 種）。弱点・シールド・耐性アップ / ダウンの単位になる。 */
+export type AttackType = Element | Weapon;
+
+/**
+ * バフ・デバフの対象になるバトル中のパラメーター。
+ *
+ * 物攻・属攻・物防・属防・速度・会心の 6 つ。
+ */
+export type BattleParameter =
+  | "criticalRate"
+  | "elementalAttack"
+  | "elementalDefense"
+  | "physicalAttack"
+  | "physicalDefense"
+  | "speed";
+
 // =============================================================================
 // 2. マスターデータ
 // =============================================================================
@@ -38,6 +61,88 @@
  * 0 = なし, 1 = ×2, 2 = ×3, 3 = MAX。値はそのまま消費 BP に一致する。
  */
 export type BoostLevel = 0 | 1 | 2 | 3;
+
+// --- ステータス効果（バフ・デバフ） -------------------------------------------
+//
+// ゲーム内では「強化効果（バフ）」「弱体効果（デバフ）」と呼ばれる。
+// 効果量（%）は「枠 × 種類 × 向き」ごとにまとめて管理され、同じまとまりの中で加算される。
+// 継続ターンも同じまとまりの中で合算される。詳細なルールは lib/domain/statusEffect.ts を参照。
+
+/** バフ（強化効果）かデバフ（弱体効果）か。 */
+export type StatusEffectPolarity = "buff" | "debuff";
+
+/**
+ * バフ・デバフの「枠」。効果量の上限（基本 30%）は枠ごとに別々に数える。
+ *
+ * - `battleAbility` … バトルアビリティ。支援者・援魔石（神獣を除く）・EX アビリティも含む
+ * - `supportAbility` … サポートアビリティと装備性能（アクセサリー等）
+ * - `ultimate` … 必殺技
+ * - `sacredBeast` … 神獣（援魔石の神獣効果）
+ * - `flameBeast` … 支炎獣
+ */
+export type StatusEffectSlot =
+  | "battleAbility"
+  | "flameBeast"
+  | "sacredBeast"
+  | "supportAbility"
+  | "ultimate";
+
+/**
+ * バフ・デバフの種類。
+ *
+ * - `parameter` … 物攻・属攻・物防・属防・速度・会心のアップ / ダウン
+ * - `resistance` … 攻撃種別ごとの耐性アップ / ダウン
+ */
+export type StatusEffectKind =
+  | { category: "parameter"; parameter: BattleParameter }
+  | { category: "resistance"; attackType: AttackType };
+
+/**
+ * アビリティ等が 1 回の行動で付与するバフ・デバフ 1 件分の内容。
+ */
+export type StatusEffectApplication = {
+  slot: StatusEffectSlot;
+  polarity: StatusEffectPolarity;
+  kind: StatusEffectKind;
+  /** 効果量（%）。正の値。 */
+  magnitude: number;
+  /** 継続ターン数。付与したターンを 1 ターン目として数える。1 以上の整数。 */
+  turns: number;
+  /**
+   * 付与元を識別するキー。「同じアビリティの重ね掛けでは効果量が増えない」判定に使う。
+   *
+   * 同名アビリティでも使用キャラが違えば別の付与元なので、キャラを含めて一意にする
+   * （例: `"${characterId}:${abilityId}"`）。「ブースト MAX 時重複可」のアビリティは
+   * ブースト MAX で使った場合を別キーにする（例: `":boostMax"` を付ける）。
+   */
+  sourceKey: string;
+  /**
+   * 同じ付与元から重ねても効果量を加算するか。既定は false。
+   *
+   * 支援者・援魔石の効果など、同じ技を繰り返しても効果量が重なるものに true を指定する。
+   */
+  stacksWithSameSource?: boolean;
+};
+
+/**
+ * ある対象にかかっている、同じ「枠 × 向き × 種類」のバフ・デバフのまとまり。
+ *
+ * 効果量と継続ターンはこの単位で合算される。
+ */
+export type StatusEffectPool = {
+  slot: StatusEffectSlot;
+  polarity: StatusEffectPolarity;
+  kind: StatusEffectKind;
+  /** 合算後の効果量（%）。上限に達した後は切れるまで下がらない。 */
+  magnitude: number;
+  /** 残り継続ターン数。現在のターンを含む。 */
+  remainingTurns: number;
+  /** これまでに効果量を寄与した付与元のキー。 */
+  sourceKeys: string[];
+};
+
+/** ある対象（味方 1 人または敵 1 体）にかかっているバフ・デバフ全体。 */
+export type StatusEffectState = readonly StatusEffectPool[];
 
 // =============================================================================
 // 5. レシピ
