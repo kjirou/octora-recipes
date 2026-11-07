@@ -128,6 +128,8 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 - Next.js 16.x（App Router）/ React 19 / TypeScript / Tailwind CSS 4
 - `create-next-app` 直後の状態から開始している。Next.js の API は学習データと異なる可能性があるため、コードを書く前に `node_modules/next/dist/docs/` を参照すること（詳細は `AGENTS.md`）。
 - 開発: `npm run dev`、ビルド: `npm run build`、lint: `npm run lint`
+- ディレクトリ方針: ルーティングは `app/`、ルーティングに関係しないコードは `lib/` に置く（`src/` は使わない）。パスエイリアスは `@/*` がリポジトリルートを指す。
+- **ドメイン型は `lib/types.ts` に集約**している。設計を 1 ファイルで俯瞰する目的で、意図的に分割せず大きなファイル（1000 行超を想定）として保つ。ゲームの概念を型で表すときはまずこのファイルを読み、追加もここに行う。
 
 ## 参考リンク
 
