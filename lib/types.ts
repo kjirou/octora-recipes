@@ -487,8 +487,12 @@ export type PowerUpStacking = "additive" | "base";
 /**
  * 威力アップの対象となる攻撃種別。
  *
- * - `any` … 無条件。すべての攻撃に掛かる
+ * - `any` … 無条件。すべての攻撃に掛かる（無属性攻撃を含む）
  * - `attackType` … 特定の武器種・属性の攻撃にだけ掛かる（例: 火炎魔法の増幅器 = 火属性）
+ *
+ * `attackType` は {@link DamageAttackType} ではなく {@link AttackType} にしている。無属性を対象にする
+ * 威力アップは確認できていないため。無属性攻撃に無条件の威力アップだけが掛かるという挙動は
+ * この型に依存しているので、広げる場合は威力アップの参照関数の挙動も見直すこと。
  */
 export type PowerUpTarget =
   { type: "any" } | { type: "attackType"; attackType: AttackType };

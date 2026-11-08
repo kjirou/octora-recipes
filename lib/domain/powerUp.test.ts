@@ -321,6 +321,31 @@ describe("getPowerUpMagnitudeByStacking", () => {
       ],
       expected: 0,
     },
+    {
+      name: "無属性攻撃には無条件のまとまりを含める",
+      args: [
+        createState([createPool({ timedMagnitude: 100, remainingTurns: 2 })]),
+        "nonElemental",
+        "base",
+      ],
+      expected: 100,
+    },
+    {
+      name: "無属性攻撃には攻撃種別限定のまとまりを含めない",
+      args: [
+        createState([
+          createPool({ timedMagnitude: 50, remainingTurns: 2 }),
+          createPool({
+            slot: "supportAbility",
+            target: fire,
+            permanentSources: [{ source: fireAmplifier, magnitude: 75 }],
+          }),
+        ]),
+        "nonElemental",
+        "base",
+      ],
+      expected: 50,
+    },
   ])("$name", ({ args, expected }) => {
     expect(getPowerUpMagnitudeByStacking(...args)).toBe(expected);
   });
@@ -370,6 +395,26 @@ describe("getEffectivePowerUpMagnitude", () => {
         "sword",
       ],
       expected: 30,
+    },
+    {
+      name: "無属性攻撃にも無条件のベースと加算を足す",
+      args: [
+        createState([
+          createPool({ timedMagnitude: 100, remainingTurns: 2 }),
+          createPool({
+            slot: "supportAbility",
+            stacking: "additive",
+            permanentSources: [{ source: huntressWeapon, magnitude: 30 }],
+          }),
+          createPool({
+            slot: "supportAbility",
+            target: fire,
+            permanentSources: [{ source: fireAmplifier, magnitude: 150 }],
+          }),
+        ]),
+        "nonElemental",
+      ],
+      expected: 130,
     },
   ])("$name", ({ args, expected }) => {
     expect(getEffectivePowerUpMagnitude(...args)).toBe(expected);
