@@ -81,7 +81,6 @@ import type {
 
 import {
   DAMAGE_UP_KIND_DEFINITIONS,
-  DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   getAttackTypeDamageUpKind,
   getStatusEffectKindDefinition,
   isDamageUpStatusEffectKind,
@@ -232,7 +231,8 @@ export const listApplicableDamageUpKinds = (
  *
  * その攻撃に掛かる種別（{@link listApplicableDamageUpKinds}）のまとまりの効果量を合算し、
  * 「枠 × 攻撃種別」の上限を適用した値を返す。上限は、武器種・属性の攻撃なら対応する
- * 武器種別・属性別の種別の上限（{@link getStatusEffectMagnitudeCap}）、無属性攻撃なら既定値。
+ * 武器種別・属性別の種別の上限（{@link getStatusEffectMagnitudeCap}）、無属性攻撃なら
+ * 全攻撃（`damageUp`）の既定の上限。
  *
  * @param attackType ダメージ計算に使う攻撃種別。弱点を突いた攻撃種別とは異なってもよい
  * @param conditions その攻撃で成立している発動条件（弱点を突いた・クリティカル・ブレイク中）
@@ -250,7 +250,7 @@ export const getDamageUpMagnitude = (
   );
   const cap =
     attackType === "nonElemental"
-      ? DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP
+      ? getStatusEffectKindDefinition("damageUp").defaultMagnitudeCap
       : getStatusEffectMagnitudeCap(
           state,
           slot,
