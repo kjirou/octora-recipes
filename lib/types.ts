@@ -57,16 +57,18 @@ export type BoostLevel = 0 | 1 | 2 | 3;
 // - ステータス効果（強化効果 / 弱体効果 = バフ / デバフ） … StatusEffect*。実装済み
 // - 状態異常（毒・麻痺・沈黙など）                         … StatusAilment*。型のみ
 // - 特殊効果（キャラ固有の「一献」「激情」、敵由来の「死の宣告」など） … SpecialEffect*。型のみ
+// - 威力アップ（攻撃アビリティの威力倍率を上げる効果）       … PowerUp*。実装済み
 
 /**
  * 状態効果の大分類。ゲーム内の表現との対応は次のとおり。
  *
+ * - `powerUp` … 威力アップ
  * - `statusEffect` … 強化効果 / 弱体効果（バフ / デバフ）
  * - `statusAilment` … 状態異常
  * - `specialEffect` … 特殊効果
  */
 export type BattleConditionCategory =
-  "specialEffect" | "statusAilment" | "statusEffect";
+  "powerUp" | "specialEffect" | "statusAilment" | "statusEffect";
 
 // --- ステータス効果（バフ・デバフ） -------------------------------------------
 //
@@ -75,12 +77,12 @@ export type BattleConditionCategory =
 // 継続ターンも同じまとまりの中で合算される。詳細なルールは lib/domain/statusEffect.ts を参照。
 //
 // 現時点の実装対象はパラメーター系（物攻・属攻・物防・属防・速度・会心）のアップ / ダウンのみ。
-// 耐性系・ダメージアップ系・威力アップなどは今後の検討事項。
+// 耐性系・ダメージアップ系などは今後の検討事項。威力アップは別の概念として PowerUp* で扱う。
 
 /**
  * ステータス効果の種別。アップ / ダウンを展開した 1 つの列挙として扱う。
  *
- * バフにしか無い種別（威力アップなど）やデバフにしか無い種別があるため、
+ * バフにしか無い種別やデバフにしか無い種別があるため、
  * 「パラメーター × 向き」の組み合わせではなく種別そのものを列挙する。
  * 各種別の属性（バフかデバフか、表示名）は {@link StatusEffectKindDefinition} をマスターデータとして持つ。
  */
@@ -301,6 +303,88 @@ export type SpecialEffectDefinition = {
   name: string;
   /** キャラ固有の特殊効果なら、そのキャラクターの ID。 */
   characterId?: string;
+};
+
+// --- 威力アップ -----------------------------------------------------------------
+//
+// 攻撃アビリティの威力に掛かる倍率を上げる効果。アビリティ・必殺技・サポートアビリティ・
+// 装備品から付与される。ステータス効果（バフ・デバフ）とは継続・重複・上限のルールが異なるため、
+// 並列する別の概念として扱う。詳細なルールは lib/domain/powerUp.ts を参照。
+//
+// 例:
+// - 神官 オズバルド EX「代償の魔術」 … バトアビ。味方単体に威力アップ 100%（2 ターン）
+// - 七英雄ロックブーケ「パッションパフューム」 … 必殺技。味方前後衛全体に威力アップ 100%
+// - 剣士 ヴィオラ EX「神器の神髄」 … サポアビ。BP1 以上消費時に自身に 100%、BP2 以上なら 150%
+// - アーティファクト「火炎魔法の増幅器」 … 装備品。条件を満たすと自身に火属性の威力アップ 75%
+// - 武器「煌く宙を堕とす狩王女Ⅳ」 … 装備品。自身に威力アップ 30%（重複可 = 加算）
+//
+// 敵に付与される「受ける攻撃の威力が増加」（深怨など）は別の概念で、ここには含めない。
+
+/**
+ * 威力アップの区分。説明文で「重複可」「加算」と明示されないものはすべて `base`。
+ *
+ * - `additive` … 加算。ベースとは独立に集計し、有効値をベースの有効値に足す
+ * - `base` … ベース
+ */
+export type PowerUpStacking = "additive" | "base";
+
+/**
+ * 威力アップの対象となる攻撃種別。
+ *
+ * - `any` … 無条件。すべての攻撃に掛かる
+ * - `attackType` … 特定の武器種・属性の攻撃にだけ掛かる（例: 火炎魔法の増幅器 = 火属性）
+ */
+export type PowerUpTarget =
+  { type: "any" } | { type: "attackType"; attackType: AttackType };
+
+/**
+ * アビリティ等が 1 回の行動で付与する威力アップ 1 件分の内容。
+ *
+ * 付与条件（BP 消費量、HP 満タンなど）の判定は呼び出し側で行い、付与されたものだけを渡す。
+ */
+export type PowerUpApplication = {
+  /** 枠。ステータス効果と同じ区分を使う。装備品由来は `supportAbility`。 */
+  slot: StatusEffectSlot;
+  target: PowerUpTarget;
+  stacking: PowerUpStacking;
+  /** 効果量（%）。正の値。上限は無い。 */
+  magnitude: number;
+  duration: StatusEffectDuration;
+  /**
+   * 付与元。ターン無し効果の差し替え・取り除きに使う。
+   * 装備品由来の場合は `abilityId` に装備品の ID を入れる。
+   */
+  source: StatusEffectSource;
+};
+
+/** まとまりに含まれるターン無しの威力アップ 1 件。 */
+export type PowerUpPermanentSource = {
+  source: StatusEffectSource;
+  /** 効果量（%）。 */
+  magnitude: number;
+};
+
+/**
+ * ある対象にかかっている、同じ「枠 × 対象の攻撃種別 × 区分」の威力アップのまとまり。
+ *
+ * まとまりの中では合算せず、効果量は高い方、残りターンは長い方が残る。
+ */
+export type PowerUpPool = {
+  slot: StatusEffectSlot;
+  target: PowerUpTarget;
+  stacking: PowerUpStacking;
+  /** ターン無し効果の一覧。 */
+  permanentSources: PowerUpPermanentSource[];
+  /** ターン付き効果の効果量（%）のうち最大のもの。切れるまで下がらない。無ければ 0。 */
+  timedMagnitude: number;
+  /** ターン付き効果の残りターン数のうち最長のもの。現在のターンを含む。無ければ 0。 */
+  remainingTurns: number;
+};
+
+/** ある対象（味方 1 人）にかかっている威力アップ全体。 */
+export type PowerUpState = {
+  /** 「枠 × 対象の攻撃種別 × 区分」ごとの威力アップのまとまり。 */
+  pools: readonly PowerUpPool[];
 };
 
 // =============================================================================
