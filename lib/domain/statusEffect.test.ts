@@ -5,6 +5,7 @@ import type {
   StatusEffectDuration,
   StatusEffectKind,
   StatusEffectPool,
+  StatusEffectSource,
   StatusEffectState,
 } from "@/lib/types";
 
@@ -15,6 +16,7 @@ import {
   getStatusEffectMagnitude,
   getStatusEffectRemainingTurns,
   isSameStatusEffectKind,
+  isSameStatusEffectSource,
   removePermanentStatusEffect,
 } from "./statusEffect";
 
@@ -37,6 +39,26 @@ const turns = (turns: number): StatusEffectDuration => ({
   turns,
 });
 
+const violaAntiAttack2: StatusEffectSource = {
+  characterId: "viola",
+  abilityId: "antiAttack2",
+};
+const therionTenso: StatusEffectSource = {
+  characterId: "therion",
+  abilityId: "tenso",
+};
+const sourceA: StatusEffectSource = { characterId: "a", abilityId: "a" };
+const sourceB: StatusEffectSource = { characterId: "b", abilityId: "b" };
+const permanentSource1: StatusEffectSource = {
+  characterId: "p",
+  abilityId: "p1",
+};
+const permanentSource2: StatusEffectSource = {
+  characterId: "p",
+  abilityId: "p2",
+};
+const timedSource1: StatusEffectSource = { characterId: "t", abilityId: "t1" };
+
 /** テスト用に、省略可能な項目を埋めた付与内容を作る。 */
 const createApplication = (
   overrides: Partial<StatusEffectApplication> = {},
@@ -46,7 +68,7 @@ const createApplication = (
   kind: physicalAttack,
   magnitude: 20,
   duration: turns(2),
-  sourceKey: "viola:antiAttack2",
+  source: violaAntiAttack2,
   ...overrides,
 });
 
@@ -60,7 +82,7 @@ const createPool = (
   permanentSources: [],
   timedMagnitude: 0,
   remainingTurns: 0,
-  timedSourceKeys: [],
+  timedSources: [],
   ...overrides,
 });
 
@@ -98,11 +120,56 @@ describe("isSameStatusEffectKind", () => {
   });
 });
 
+describe("isSameStatusEffectSource", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof isSameStatusEffectSource>;
+    expected: ReturnType<typeof isSameStatusEffectSource>;
+  }>([
+    {
+      name: "キャラとアビリティが同じなら同じ付与元",
+      args: [
+        violaAntiAttack2,
+        { characterId: "viola", abilityId: "antiAttack2" },
+      ],
+      expected: true,
+    },
+    {
+      name: "同名アビリティでもキャラが違えば別の付与元",
+      args: [
+        { characterId: "cress", abilityId: "backstab" },
+        { characterId: "duran", abilityId: "backstab" },
+      ],
+      expected: false,
+    },
+    {
+      name: "同じキャラでもアビリティが違えば別の付与元",
+      args: [violaAntiAttack2, { characterId: "viola", abilityId: "other" }],
+      expected: false,
+    },
+    {
+      name: "区別が片方にだけあれば別の付与元",
+      args: [violaAntiAttack2, { ...violaAntiAttack2, variant: "boostMax" }],
+      expected: false,
+    },
+    {
+      name: "区別まで同じなら同じ付与元",
+      args: [
+        { ...violaAntiAttack2, variant: "boostMax" },
+        { ...violaAntiAttack2, variant: "boostMax" },
+      ],
+      expected: true,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(isSameStatusEffectSource(...args)).toBe(expected);
+  });
+});
+
 describe("findStatusEffectPool", () => {
   const state = applyAll([
     createApplication(),
-    createApplication({ polarity: "buff", sourceKey: "a" }),
-    createApplication({ slot: "ultimate", sourceKey: "b" }),
+    createApplication({ polarity: "buff", source: sourceA }),
+    createApplication({ slot: "ultimate", source: sourceB }),
   ]);
 
   test.each<{
@@ -116,7 +183,7 @@ describe("findStatusEffectPool", () => {
       expected: createPool({
         timedMagnitude: 20,
         remainingTurns: 2,
-        timedSourceKeys: ["viola:antiAttack2"],
+        timedSources: [violaAntiAttack2],
       }),
     },
     {
@@ -126,7 +193,7 @@ describe("findStatusEffectPool", () => {
         polarity: "buff",
         timedMagnitude: 20,
         remainingTurns: 2,
-        timedSourceKeys: ["a"],
+        timedSources: [sourceA],
       }),
     },
     {
@@ -136,7 +203,7 @@ describe("findStatusEffectPool", () => {
         slot: "ultimate",
         timedMagnitude: 20,
         remainingTurns: 2,
-        timedSourceKeys: ["b"],
+        timedSources: [sourceB],
       }),
     },
     {
@@ -189,14 +256,14 @@ describe("getStatusEffectMagnitude", () => {
             polarity: "buff",
             magnitude: 10,
             duration: permanent,
-            sourceKey: "frontRowAttackUp",
+            source: permanentSource1,
           }),
           createApplication({
             slot: "supportAbility",
             polarity: "buff",
             magnitude: 15,
             duration: turns(3),
-            sourceKey: "startAttackUp",
+            source: timedSource1,
           }),
         ]),
         "supportAbility",
@@ -210,8 +277,8 @@ describe("getStatusEffectMagnitude", () => {
       args: [
         applyAll([
           createApplication({ magnitude: 10, duration: permanent }),
-          createApplication({ magnitude: 15, sourceKey: "a" }),
-          createApplication({ magnitude: 20, sourceKey: "b" }),
+          createApplication({ magnitude: 15, source: sourceA }),
+          createApplication({ magnitude: 20, source: sourceB }),
         ]),
         "battleAbility",
         "debuff",
@@ -224,7 +291,7 @@ describe("getStatusEffectMagnitude", () => {
       args: [
         applyAll([
           createApplication({ magnitude: 30 }),
-          createApplication({ magnitude: 25, sourceKey: "other" }),
+          createApplication({ magnitude: 25, source: sourceA }),
         ]),
         "battleAbility",
         "debuff",
@@ -303,7 +370,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSourceKeys: ["viola:antiAttack2"],
+            timedSources: [violaAntiAttack2],
           }),
         ],
       },
@@ -314,7 +381,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 20,
             remainingTurns: 4,
-            timedSourceKeys: ["viola:antiAttack2"],
+            timedSources: [violaAntiAttack2],
           }),
         ],
       },
@@ -322,13 +389,13 @@ describe("applyStatusEffect", () => {
         name: "違う付与元を重ねると効果量が加算される（アンチアタックⅡ 20% + 天鼠 15%）",
         applications: [
           createApplication(),
-          createApplication({ magnitude: 15, sourceKey: "therion:tenso" }),
+          createApplication({ magnitude: 15, source: therionTenso }),
         ],
         expected: [
           createPool({
             timedMagnitude: 35,
             remainingTurns: 4,
-            timedSourceKeys: ["viola:antiAttack2", "therion:tenso"],
+            timedSources: [violaAntiAttack2, therionTenso],
           }),
         ],
       },
@@ -338,12 +405,12 @@ describe("applyStatusEffect", () => {
           createApplication({
             kind: physicalDefense,
             magnitude: 15,
-            sourceKey: "cress:backstab",
+            source: { characterId: "cress", abilityId: "backstab" },
           }),
           createApplication({
             kind: physicalDefense,
             magnitude: 15,
-            sourceKey: "duran:backstab",
+            source: { characterId: "duran", abilityId: "backstab" },
           }),
         ],
         expected: [
@@ -351,7 +418,10 @@ describe("applyStatusEffect", () => {
             kind: physicalDefense,
             timedMagnitude: 30,
             remainingTurns: 4,
-            timedSourceKeys: ["cress:backstab", "duran:backstab"],
+            timedSources: [
+              { characterId: "cress", abilityId: "backstab" },
+              { characterId: "duran", abilityId: "backstab" },
+            ],
           }),
         ],
       },
@@ -360,14 +430,14 @@ describe("applyStatusEffect", () => {
         applications: Array.from({ length: 4 }, () =>
           createApplication({
             magnitude: 15,
-            sourceKey: "chloe:kazakiribane",
+            source: { characterId: "chloe", abilityId: "kazakiribane" },
           }),
         ),
         expected: [
           createPool({
             timedMagnitude: 15,
             remainingTurns: 8,
-            timedSourceKeys: ["chloe:kazakiribane"],
+            timedSources: [{ characterId: "chloe", abilityId: "kazakiribane" }],
           }),
         ],
       },
@@ -378,7 +448,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 20,
             remainingTurns: 9,
-            timedSourceKeys: ["viola:antiAttack2"],
+            timedSources: [violaAntiAttack2],
           }),
         ],
       },
@@ -391,7 +461,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 40,
             remainingTurns: 9,
-            timedSourceKeys: ["viola:antiAttack2"],
+            timedSources: [violaAntiAttack2],
           }),
         ],
       },
@@ -400,12 +470,12 @@ describe("applyStatusEffect", () => {
         applications: [
           createApplication({
             magnitude: 10,
-            sourceKey: "supporter:francesca",
+            source: { characterId: "francesca", abilityId: "hametsuNoUta" },
             stacksWithSameSource: true,
           }),
           createApplication({
             magnitude: 10,
-            sourceKey: "supporter:francesca",
+            source: { characterId: "francesca", abilityId: "hametsuNoUta" },
             stacksWithSameSource: true,
           }),
         ],
@@ -413,24 +483,48 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 20,
             remainingTurns: 4,
-            timedSourceKeys: ["supporter:francesca"],
+            timedSources: [
+              { characterId: "francesca", abilityId: "hametsuNoUta" },
+            ],
           }),
         ],
       },
       {
-        name: "ブースト MAX 時重複可のアビリティは、通常時と MAX 時を別の付与元として加算する（雷獣の詩）",
+        name: "ブースト MAX 時重複可のアビリティは、通常時と MAX 時を区別で分けて加算する（雷獣の詩）",
         applications: [
-          createApplication({ magnitude: 15, sourceKey: "titi:raijuNoUta" }),
           createApplication({
             magnitude: 15,
-            sourceKey: "titi:raijuNoUta:boostMax",
+            source: { characterId: "titi", abilityId: "raijuNoUta" },
+          }),
+          createApplication({
+            magnitude: 15,
+            source: {
+              characterId: "titi",
+              abilityId: "raijuNoUta",
+              variant: "boostMax",
+            },
+          }),
+          createApplication({
+            magnitude: 15,
+            source: {
+              characterId: "titi",
+              abilityId: "raijuNoUta",
+              variant: "boostMax",
+            },
           }),
         ],
         expected: [
           createPool({
             timedMagnitude: 30,
-            remainingTurns: 4,
-            timedSourceKeys: ["titi:raijuNoUta", "titi:raijuNoUta:boostMax"],
+            remainingTurns: 6,
+            timedSources: [
+              { characterId: "titi", abilityId: "raijuNoUta" },
+              {
+                characterId: "titi",
+                abilityId: "raijuNoUta",
+                variant: "boostMax",
+              },
+            ],
           }),
         ],
       },
@@ -439,13 +533,13 @@ describe("applyStatusEffect", () => {
         applications: [
           createApplication({
             polarity: "buff",
-            sourceKey: "lynette:tatsujinNoKobu3",
+            source: { characterId: "lynette", abilityId: "tatsujinNoKobu3" },
           }),
           createApplication({
             slot: "ultimate",
             polarity: "buff",
             duration: turns(3),
-            sourceKey: "primrose:ultimate",
+            source: { characterId: "primrose", abilityId: "ultimate" },
           }),
         ],
         expected: [
@@ -453,14 +547,16 @@ describe("applyStatusEffect", () => {
             polarity: "buff",
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSourceKeys: ["lynette:tatsujinNoKobu3"],
+            timedSources: [
+              { characterId: "lynette", abilityId: "tatsujinNoKobu3" },
+            ],
           }),
           createPool({
             slot: "ultimate",
             polarity: "buff",
             timedMagnitude: 20,
             remainingTurns: 3,
-            timedSourceKeys: ["primrose:ultimate"],
+            timedSources: [{ characterId: "primrose", abilityId: "ultimate" }],
           }),
         ],
       },
@@ -475,34 +571,34 @@ describe("applyStatusEffect", () => {
             kind: physicalAttack,
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSourceKeys: ["viola:antiAttack2"],
+            timedSources: [violaAntiAttack2],
           }),
           createPool({
             kind: elementalAttack,
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSourceKeys: ["viola:antiAttack2"],
+            timedSources: [violaAntiAttack2],
           }),
         ],
       },
       {
         name: "同じ種類でもバフとデバフは別々に管理される（相殺しない）",
         applications: [
-          createApplication({ polarity: "buff", sourceKey: "a" }),
-          createApplication({ polarity: "debuff", sourceKey: "b" }),
+          createApplication({ polarity: "buff", source: sourceA }),
+          createApplication({ polarity: "debuff", source: sourceB }),
         ],
         expected: [
           createPool({
             polarity: "buff",
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSourceKeys: ["a"],
+            timedSources: [sourceA],
           }),
           createPool({
             polarity: "debuff",
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSourceKeys: ["b"],
+            timedSources: [sourceB],
           }),
         ],
       },
@@ -523,12 +619,12 @@ describe("applyStatusEffect", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
         ],
         expected: [
           createPool({
-            permanentSources: [{ sourceKey: "p1", magnitude: 10 }],
+            permanentSources: [{ source: permanentSource1, magnitude: 10 }],
           }),
         ],
       },
@@ -538,17 +634,17 @@ describe("applyStatusEffect", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
           createApplication({
             magnitude: 15,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
         ],
         expected: [
           createPool({
-            permanentSources: [{ sourceKey: "p1", magnitude: 15 }],
+            permanentSources: [{ source: permanentSource1, magnitude: 15 }],
           }),
         ],
       },
@@ -558,19 +654,19 @@ describe("applyStatusEffect", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
           createApplication({
             magnitude: 5,
             duration: permanent,
-            sourceKey: "p2",
+            source: permanentSource2,
           }),
         ],
         expected: [
           createPool({
             permanentSources: [
-              { sourceKey: "p1", magnitude: 10 },
-              { sourceKey: "p2", magnitude: 5 },
+              { source: permanentSource1, magnitude: 10 },
+              { source: permanentSource2, magnitude: 5 },
             ],
           }),
         ],
@@ -581,20 +677,20 @@ describe("applyStatusEffect", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
           createApplication({
             magnitude: 15,
             duration: turns(3),
-            sourceKey: "t1",
+            source: timedSource1,
           }),
         ],
         expected: [
           createPool({
-            permanentSources: [{ sourceKey: "p1", magnitude: 10 }],
+            permanentSources: [{ source: permanentSource1, magnitude: 10 }],
             timedMagnitude: 15,
             remainingTurns: 3,
-            timedSourceKeys: ["t1"],
+            timedSources: [timedSource1],
           }),
         ],
       },
@@ -604,20 +700,20 @@ describe("applyStatusEffect", () => {
           createApplication({
             magnitude: 15,
             duration: turns(3),
-            sourceKey: "t1",
+            source: timedSource1,
           }),
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
         ],
         expected: [
           createPool({
-            permanentSources: [{ sourceKey: "p1", magnitude: 10 }],
+            permanentSources: [{ source: permanentSource1, magnitude: 10 }],
             timedMagnitude: 15,
             remainingTurns: 3,
-            timedSourceKeys: ["t1"],
+            timedSources: [timedSource1],
           }),
         ],
       },
@@ -630,10 +726,10 @@ describe("applyStatusEffect", () => {
     it("元の状態を変更しない", () => {
       const before = applyAll([createApplication()]);
       const snapshot = structuredClone(before);
-      applyStatusEffect(before, createApplication({ sourceKey: "other" }));
+      applyStatusEffect(before, createApplication({ source: sourceA }));
       applyStatusEffect(
         before,
-        createApplication({ duration: permanent, sourceKey: "p1" }),
+        createApplication({ duration: permanent, source: permanentSource1 }),
       );
       expect(before).toStrictEqual(snapshot);
     });
@@ -689,19 +785,19 @@ describe("removePermanentStatusEffect", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
           createApplication({
             magnitude: 5,
             duration: permanent,
-            sourceKey: "p2",
+            source: permanentSource2,
           }),
         ]),
-        "p1",
+        permanentSource1,
       ],
       expected: [
         createPool({
-          permanentSources: [{ sourceKey: "p2", magnitude: 5 }],
+          permanentSources: [{ source: permanentSource2, magnitude: 5 }],
         }),
       ],
     },
@@ -712,17 +808,17 @@ describe("removePermanentStatusEffect", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
-          createApplication({ sourceKey: "t1" }),
+          createApplication({ source: timedSource1 }),
         ]),
-        "p1",
+        permanentSource1,
       ],
       expected: [
         createPool({
           timedMagnitude: 20,
           remainingTurns: 2,
-          timedSourceKeys: ["t1"],
+          timedSources: [timedSource1],
         }),
       ],
     },
@@ -733,10 +829,10 @@ describe("removePermanentStatusEffect", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
         ]),
-        "p1",
+        permanentSource1,
       ],
       expected: [],
     },
@@ -748,27 +844,30 @@ describe("removePermanentStatusEffect", () => {
             kind: physicalAttack,
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
           createApplication({
             kind: elementalAttack,
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
         ]),
-        "p1",
+        permanentSource1,
       ],
       expected: [],
     },
     {
       name: "該当する付与元が無ければ変化しない",
-      args: [applyAll([createApplication({ sourceKey: "t1" })]), "p1"],
+      args: [
+        applyAll([createApplication({ source: timedSource1 })]),
+        permanentSource1,
+      ],
       expected: [
         createPool({
           timedMagnitude: 20,
           remainingTurns: 2,
-          timedSourceKeys: ["t1"],
+          timedSources: [timedSource1],
         }),
       ],
     },
@@ -778,10 +877,10 @@ describe("removePermanentStatusEffect", () => {
 
   it("元の状態を変更しない", () => {
     const before = applyAll([
-      createApplication({ duration: permanent, sourceKey: "p1" }),
+      createApplication({ duration: permanent, source: permanentSource1 }),
     ]);
     const snapshot = structuredClone(before);
-    removePermanentStatusEffect(before, "p1");
+    removePermanentStatusEffect(before, permanentSource1);
     expect(before).toStrictEqual(snapshot);
   });
 });
@@ -797,20 +896,20 @@ describe("elapseStatusEffectTurn", () => {
       args: [
         applyAll([
           createApplication({ duration: turns(3) }),
-          createApplication({ slot: "ultimate", sourceKey: "u" }),
+          createApplication({ slot: "ultimate", source: sourceA }),
         ]),
       ],
       expected: [
         createPool({
           timedMagnitude: 20,
           remainingTurns: 2,
-          timedSourceKeys: ["viola:antiAttack2"],
+          timedSources: [violaAntiAttack2],
         }),
         createPool({
           slot: "ultimate",
           timedMagnitude: 20,
           remainingTurns: 1,
-          timedSourceKeys: ["u"],
+          timedSources: [sourceA],
         }),
       ],
     },
@@ -826,14 +925,14 @@ describe("elapseStatusEffectTurn", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
-          createApplication({ duration: turns(1), sourceKey: "t1" }),
+          createApplication({ duration: turns(1), source: timedSource1 }),
         ]),
       ],
       expected: [
         createPool({
-          permanentSources: [{ sourceKey: "p1", magnitude: 10 }],
+          permanentSources: [{ source: permanentSource1, magnitude: 10 }],
         }),
       ],
     },
@@ -844,13 +943,13 @@ describe("elapseStatusEffectTurn", () => {
           createApplication({
             magnitude: 10,
             duration: permanent,
-            sourceKey: "p1",
+            source: permanentSource1,
           }),
         ]),
       ],
       expected: [
         createPool({
-          permanentSources: [{ sourceKey: "p1", magnitude: 10 }],
+          permanentSources: [{ source: permanentSource1, magnitude: 10 }],
         }),
       ],
     },
@@ -891,7 +990,7 @@ describe("ターンをまたいだシナリオ", () => {
     // 1 ターン目
     let state = applyStatusEffect(
       [],
-      createApplication({ polarity: "buff", magnitude: 10, sourceKey: "a" }),
+      createApplication({ polarity: "buff", magnitude: 10, source: sourceA }),
     );
     expect(readBattleAbilityBuff(state)).toStrictEqual({
       magnitude: 10,
@@ -902,7 +1001,7 @@ describe("ターンをまたいだシナリオ", () => {
     // 2 ターン目: 残り 1 ターンに 2 ターン分が足されて 3 ターンになる
     state = applyStatusEffect(
       state,
-      createApplication({ polarity: "buff", magnitude: 20, sourceKey: "b" }),
+      createApplication({ polarity: "buff", magnitude: 20, source: sourceB }),
     );
     expect(readBattleAbilityBuff(state)).toStrictEqual({
       magnitude: 30,
@@ -933,8 +1032,8 @@ describe("ターンをまたいだシナリオ", () => {
 
   it("切れる前にどちらの技で延長しても 30% が維持される", () => {
     let state = applyAll([
-      createApplication({ polarity: "buff", magnitude: 10, sourceKey: "a" }),
-      createApplication({ polarity: "buff", magnitude: 20, sourceKey: "b" }),
+      createApplication({ polarity: "buff", magnitude: 10, source: sourceA }),
+      createApplication({ polarity: "buff", magnitude: 20, source: sourceB }),
     ]);
     state = elapseStatusEffectTurn(state);
     state = elapseStatusEffectTurn(state);
@@ -946,7 +1045,7 @@ describe("ターンをまたいだシナリオ", () => {
 
     state = applyStatusEffect(
       state,
-      createApplication({ polarity: "buff", magnitude: 10, sourceKey: "a" }),
+      createApplication({ polarity: "buff", magnitude: 10, source: sourceA }),
     );
     expect(readBattleAbilityBuff(state)).toStrictEqual({
       magnitude: 30,
@@ -964,14 +1063,14 @@ describe("ターンをまたいだシナリオ", () => {
         polarity: "buff",
         magnitude: 10,
         duration: permanent,
-        sourceKey: "frontRowAttackUp",
+        source: permanentSource1,
       }),
       createApplication({
         slot: "supportAbility",
         polarity: "buff",
         magnitude: 15,
         duration: turns(2),
-        sourceKey: "startAttackUp",
+        source: timedSource1,
       }),
     ]);
     expect(read(state)).toBe(25);
@@ -982,7 +1081,7 @@ describe("ターンをまたいだシナリオ", () => {
     state = elapseStatusEffectTurn(state);
     expect(read(state)).toBe(10);
 
-    state = removePermanentStatusEffect(state, "frontRowAttackUp");
+    state = removePermanentStatusEffect(state, permanentSource1);
     expect(read(state)).toBe(0);
     expect(state).toStrictEqual([]);
   });

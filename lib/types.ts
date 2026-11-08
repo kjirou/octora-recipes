@@ -113,6 +113,25 @@ export type StatusEffectDuration =
   { type: "permanent" } | { type: "turns"; turns: number };
 
 /**
+ * バフ・デバフの付与元。「誰のどのアビリティか」で識別する。
+ *
+ * 「同じアビリティの重ね掛けでは効果量が増えない」判定と、ターン無し効果の取り除きに使う。
+ * 同名アビリティでも使用キャラが違えば別の付与元になる。
+ * キャラクターのステータスを参照する効果のために、キャラクター単体でも識別できるようにしている。
+ */
+export type StatusEffectSource = {
+  characterId: string;
+  abilityId: string;
+  /**
+   * 同じキャラ・同じアビリティでも別の付与元として扱いたい場合の区別。
+   *
+   * 「ブースト MAX 時重複可」のアビリティをブースト MAX で使った場合に `"boostMax"` を
+   * 指定する、といった使い方をする。
+   */
+  variant?: string;
+};
+
+/**
  * アビリティ等が 1 回の行動で付与するバフ・デバフ 1 件分の内容。
  */
 export type StatusEffectApplication = {
@@ -122,15 +141,7 @@ export type StatusEffectApplication = {
   /** 効果量（%）。正の値。 */
   magnitude: number;
   duration: StatusEffectDuration;
-  /**
-   * 付与元を識別するキー。「同じアビリティの重ね掛けでは効果量が増えない」判定と、
-   * ターン無し効果の取り除きに使う。
-   *
-   * 同名アビリティでも使用キャラが違えば別の付与元なので、キャラを含めて一意にする
-   * （例: `"${characterId}:${abilityId}"`）。「ブースト MAX 時重複可」のアビリティは
-   * ブースト MAX で使った場合を別キーにする（例: `":boostMax"` を付ける）。
-   */
-  sourceKey: string;
+  source: StatusEffectSource;
   /**
    * ターン付き効果を同じ付与元から重ねたとき、効果量も加算するか。既定は false。
    *
@@ -142,7 +153,7 @@ export type StatusEffectApplication = {
 
 /** まとまりに含まれるターン無し効果 1 件。 */
 export type StatusEffectPermanentSource = {
-  sourceKey: string;
+  source: StatusEffectSource;
   /** 効果量（%）。 */
   magnitude: number;
 };
@@ -164,8 +175,8 @@ export type StatusEffectPool = {
   timedMagnitude: number;
   /** ターン付き効果の残りターン数。現在のターンを含む。ターン付き効果が無ければ 0。 */
   remainingTurns: number;
-  /** ターン付き効果として効果量を寄与した付与元のキー。 */
-  timedSourceKeys: string[];
+  /** ターン付き効果として効果量を寄与した付与元。 */
+  timedSources: StatusEffectSource[];
 };
 
 /** ある対象（味方 1 人または敵 1 体）にかかっているバフ・デバフ全体。 */

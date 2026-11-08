@@ -20,8 +20,7 @@
  * - 付与したターンを 1 ターン目として数え、ターン終了時に 1 減る。0 になったら
  *   ターン付き効果がまとめて消える。ターン無し効果は条件が外れたときに明示的に取り除く。
  *
- * 枠ごとの効果量を最終的なダメージ倍率に合成する計算（枠・系統ごとの乗算）は
- * このモジュールの範囲外。
+ * 枠ごとの効果量を最終的なダメージ倍率に合成する計算は、このモジュールの範囲外。
  */
 
 import type {
@@ -30,6 +29,7 @@ import type {
   StatusEffectPolarity,
   StatusEffectPool,
   StatusEffectSlot,
+  StatusEffectSource,
   StatusEffectState,
 } from "@/lib/types";
 
@@ -52,6 +52,15 @@ export const isSameStatusEffectKind = (
   a: StatusEffectKind,
   b: StatusEffectKind,
 ): boolean => a.parameter === b.parameter;
+
+/** 2 つの付与元が同じかを返す。キャラ・アビリティ・区別がすべて一致すれば同じ。 */
+export const isSameStatusEffectSource = (
+  a: StatusEffectSource,
+  b: StatusEffectSource,
+): boolean =>
+  a.characterId === b.characterId &&
+  a.abilityId === b.abilityId &&
+  a.variant === b.variant;
 
 /** 指定した「枠 × 向き × 種類」のまとまりを返す。無ければ undefined。 */
 export const findStatusEffectPool = (
@@ -84,7 +93,7 @@ export const getStatusEffectMagnitude = (
     return 0;
   }
   const permanentMagnitude = pool.permanentSources.reduce(
-    (sum, source) => sum + source.magnitude,
+    (sum, permanentSource) => sum + permanentSource.magnitude,
     0,
   );
   const magnitudeCap = options.magnitudeCap ?? MAX_STATUS_EFFECT_MAGNITUDE;
@@ -129,7 +138,7 @@ export const applyStatusEffect = (
     kind,
     magnitude,
     duration,
-    sourceKey,
+    source,
     stacksWithSameSource = false,
   } = application;
   if (!(Number.isFinite(magnitude) && magnitude > 0)) {
@@ -154,26 +163,30 @@ export const applyStatusEffect = (
     permanentSources: [],
     timedMagnitude: 0,
     remainingTurns: 0,
-    timedSourceKeys: [],
+    timedSources: [],
   };
 
   if (duration.type === "permanent") {
     // 同じ付与元のターン無し効果は 1 件だけ保持する（再付与は差し替え）。
-    const hasSameSource = base.permanentSources.some(
-      (source) => source.sourceKey === sourceKey,
+    const hasSameSource = base.permanentSources.some((permanentSource) =>
+      isSameStatusEffectSource(permanentSource.source, source),
     );
     const permanentSources = hasSameSource
-      ? base.permanentSources.map((source) =>
-          source.sourceKey === sourceKey ? { sourceKey, magnitude } : source,
+      ? base.permanentSources.map((permanentSource) =>
+          isSameStatusEffectSource(permanentSource.source, source)
+            ? { source, magnitude }
+            : permanentSource,
         )
-      : [...base.permanentSources, { sourceKey, magnitude }];
+      : [...base.permanentSources, { source, magnitude }];
     return replaceStatusEffectPool(state, existing, {
       ...base,
       permanentSources,
     });
   }
 
-  const isNewSource = !base.timedSourceKeys.includes(sourceKey);
+  const isNewSource = !base.timedSources.some((timedSource) =>
+    isSameStatusEffectSource(timedSource, source),
+  );
   const addsMagnitude = isNewSource || stacksWithSameSource;
   return replaceStatusEffectPool(state, existing, {
     ...base,
@@ -184,9 +197,9 @@ export const applyStatusEffect = (
       base.remainingTurns + duration.turns,
       MAX_STATUS_EFFECT_TURNS,
     ),
-    timedSourceKeys: isNewSource
-      ? [...base.timedSourceKeys, sourceKey]
-      : base.timedSourceKeys,
+    timedSources: isNewSource
+      ? [...base.timedSources, source]
+      : base.timedSources,
   });
 };
 
@@ -198,11 +211,12 @@ export const applyStatusEffect = (
  */
 export const removePermanentStatusEffect = (
   state: StatusEffectState,
-  sourceKey: string,
+  source: StatusEffectSource,
 ): StatusEffectState =>
   state.flatMap((pool) => {
     const permanentSources = pool.permanentSources.filter(
-      (source) => source.sourceKey !== sourceKey,
+      (permanentSource) =>
+        !isSameStatusEffectSource(permanentSource.source, source),
     );
     if (permanentSources.length === pool.permanentSources.length) {
       return [pool];
@@ -227,7 +241,7 @@ export const elapseStatusEffectTurn = (
     const remainingTurns = pool.remainingTurns - 1;
     const updated: StatusEffectPool =
       remainingTurns === 0
-        ? { ...pool, timedMagnitude: 0, remainingTurns: 0, timedSourceKeys: [] }
+        ? { ...pool, timedMagnitude: 0, remainingTurns: 0, timedSources: [] }
         : { ...pool, remainingTurns };
     return isEmptyStatusEffectPool(updated) ? [] : [updated];
   });
