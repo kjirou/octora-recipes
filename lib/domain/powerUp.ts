@@ -15,12 +15,15 @@
  * - 付与したターンを 1 ターン目として数え、ターン終了時に 1 減る。0 になったらターン付き効果が消える。
  * - ある攻撃に有効な値は、その攻撃に該当するまとまり（無条件 + その攻撃種別）について、
  *   区分ごとに枠を問わず最大値を取り、ベースの最大値と加算の最大値を足したもの。
+ * - 攻撃種別はダメージ計算に使う攻撃種別（無属性を含む）で受け取る。無属性攻撃には無条件の
+ *   威力アップだけが掛かる。これは資料（オクトラ書庫・game8 など）で確認できていない実装上の
+ *   仮定で、威力アップの説明文が攻撃種別を限定していないことに基づく。
  *
  * 付与条件（BP 消費量・HP 満タンなど）の判定と、ダメージ倍率への合成はこのモジュールの範囲外。
  */
 
 import type {
-  AttackType,
+  DamageAttackType,
   PowerUpApplication,
   PowerUpPool,
   PowerUpStacking,
@@ -46,10 +49,14 @@ export const isSamePowerUpTarget = (
   return a.attackType === b.attackType;
 };
 
-/** 対象の攻撃種別が、指定した攻撃種別の攻撃に掛かるかを返す。 */
+/**
+ * 対象の攻撃種別が、指定した攻撃種別の攻撃に掛かるかを返す。
+ *
+ * 無属性攻撃には無条件の威力アップだけが掛かる（武器種・属性を対象にするものは掛からない）。
+ */
 const coversAttackType = (
   target: PowerUpTarget,
-  attackType: AttackType,
+  attackType: DamageAttackType,
 ): boolean => target.type === "any" || target.attackType === attackType;
 
 /** 指定した「枠 × 対象の攻撃種別 × 区分」のまとまりを返す。無ければ undefined。 */
@@ -94,7 +101,7 @@ export const getPowerUpPoolMagnitude = (
  */
 export const getPowerUpMagnitudeByStacking = (
   state: PowerUpState,
-  attackType: AttackType,
+  attackType: DamageAttackType,
   stacking: PowerUpStacking,
 ): number =>
   state.pools
@@ -111,7 +118,7 @@ export const getPowerUpMagnitudeByStacking = (
  */
 export const getEffectivePowerUpMagnitude = (
   state: PowerUpState,
-  attackType: AttackType,
+  attackType: DamageAttackType,
 ): number =>
   getPowerUpMagnitudeByStacking(state, attackType, "base") +
   getPowerUpMagnitudeByStacking(state, attackType, "additive");
