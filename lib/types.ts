@@ -477,8 +477,8 @@ export type StatusEffectDuration =
  * キャラクターのステータスを参照する効果のために、キャラクター単体でも識別できるようにしている。
  */
 export type StatusEffectSource = {
-  characterId: string;
-  abilityId: string;
+  characterId: DataId;
+  abilityId: DataId;
   /**
    * 同じキャラ・同じアビリティでも別の付与元として扱いたい場合の区別。
    *
@@ -644,11 +644,11 @@ export type StatusAilmentKindDefinition = {
 /** 特殊効果のマスターデータ 1 件。 */
 export type SpecialEffectDefinition = {
   /** 一意な ID（例: `"kazan:ikkon"`）。 */
-  id: string;
+  id: DataId;
   /** 日本語の表示名。ゲーム内のアビリティ説明文での名称（例: 一献）。 */
   name: string;
   /** キャラ固有の特殊効果なら、そのキャラクターの ID。 */
-  characterId?: string;
+  characterId?: DataId;
 };
 
 // --- 威力アップ -----------------------------------------------------------------
