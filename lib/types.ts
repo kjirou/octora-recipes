@@ -41,6 +41,40 @@ export type AttackType = Element | Weapon;
  */
 export type DamageAttackType = AttackType | "nonElemental";
 
+/**
+ * ジョブ。剣士・商人・盗賊・薬師・狩人・神官・学者・踊子の 8 種。
+ *
+ * - `apothecary` … 薬師（斧）
+ * - `cleric` … 神官（杖）
+ * - `dancer` … 踊子（扇）
+ * - `hunter` … 狩人（弓）
+ * - `merchant` … 商人（槍）
+ * - `scholar` … 学者（本）
+ * - `thief` … 盗賊（短剣）
+ * - `warrior` … 剣士（剣）
+ */
+export type Job =
+  | "apothecary"
+  | "cleric"
+  | "dancer"
+  | "hunter"
+  | "merchant"
+  | "scholar"
+  | "thief"
+  | "warrior";
+
+/**
+ * 影響力。キャラクターごとにいずれか 1 つを持つ。
+ *
+ * - `fame` … 名声（承認）
+ * - `power` … 権力（支配）
+ * - `wealth` … 富（所有）
+ */
+export type Influence = "fame" | "power" | "wealth";
+
+/** キャラクターのレアリティ（★3 / ★4 / ★5）。 */
+export type Rarity = 3 | 4 | 5;
+
 // =============================================================================
 // 2. マスターデータ
 // =============================================================================
