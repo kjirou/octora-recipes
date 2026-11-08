@@ -157,6 +157,7 @@ const getRawPoolMagnitude = (pool: StatusEffectPool): number =>
  *
  * ターン無し・ターン付きの効果量を合計し、現在有効な上限を適用した値を返す。
  * ダメージアップ系の種別は上限の単位が違うため受け付けない。{@link getDamageUpMagnitude} を使う。
+ * ダメージ上限アップ系の種別も受け付けない。{@link getDamageCapUpMagnitude} を使う。
  */
 export const getStatusEffectMagnitude = (
   state: StatusEffectState,
