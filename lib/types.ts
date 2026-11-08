@@ -84,21 +84,25 @@ export type BattleConditionCategory =
 // --- ステータス効果（バフ・デバフ） -------------------------------------------
 //
 // ゲーム内では「強化効果（バフ）」「弱体効果（デバフ）」と呼ばれる。
-// 効果量（%）は「枠 × 種別」ごとにまとめて管理され、同じまとまりの中で加算される。
+// 効果量は「枠 × 種別」ごとにまとめて管理され、同じまとまりの中で加算される。
+// 効果量の単位（% / 絶対値）と既定の上限は種別ごとに決まる。
 // 継続ターンも同じまとまりの中で合算される。詳細なルールは lib/domain/statusEffect.ts を参照。
 //
 // 現時点の実装対象は、パラメーター系（物攻・属攻・物防・属防・速度・会心）のアップ / ダウンと
-// ダメージアップ系。耐性系などは今後の検討事項。威力アップは別の概念として PowerUp* で扱う。
+// ダメージアップ系、ダメージ上限アップ系。耐性系などは今後の検討事項。威力アップは別の概念として PowerUp* で扱う。
 
 /**
  * ステータス効果の種別。アップ / ダウンを展開した 1 つの列挙として扱う。
  *
  * バフにしか無い種別やデバフにしか無い種別があるため、
  * 「パラメーター × 向き」の組み合わせではなく種別そのものを列挙する。
- * 各種別の属性（バフかデバフか、表示名）は {@link StatusEffectKindDefinition} をマスターデータとして持つ。
+ * 各種別の属性（バフかデバフか、表示名、効果量の単位と既定の上限）は {@link StatusEffectKindDefinition} を
+ * マスターデータとして持つ。
  */
 export type StatusEffectKind =
-  DamageUpStatusEffectKind | ParameterStatusEffectKind;
+  | DamageCapUpStatusEffectKind
+  | DamageUpStatusEffectKind
+  | ParameterStatusEffectKind;
 
 /** パラメーター系（物攻・属攻・物防・属防・速度・会心）の種別。 */
 export type ParameterStatusEffectKind =
@@ -154,14 +158,14 @@ export type DamageUpStatusEffectKind =
   | "windDamageUp";
 
 /**
- * ダメージアップが掛かる攻撃種別。
+ * ダメージアップ系・ダメージ上限アップ系の種別が掛かる攻撃種別。
  *
  * - `any` … 全攻撃。無属性攻撃にも掛かる
  * - `attackType` … 特定の武器種・属性の攻撃
  * - `elemental` … 全属性の攻撃
  * - `physical` … 全物理（全武器種）の攻撃
  */
-export type DamageUpTarget =
+export type StatusEffectAttackTarget =
   | { type: "any" }
   | { type: "attackType"; attackType: AttackType }
   | { type: "elemental" }
@@ -179,13 +183,63 @@ export type DamageUpCondition = "break" | "critical" | "weakness";
 /** ダメージアップ系の種別の、攻撃時の合算に使うマスターデータ 1 件。 */
 export type DamageUpKindDefinition = {
   kind: DamageUpStatusEffectKind;
-  target: DamageUpTarget;
+  target: StatusEffectAttackTarget;
   /** 発動条件。無条件なら null。 */
   condition: DamageUpCondition | null;
 };
 
+/**
+ * ダメージ上限アップ系の種別。すべてバフ（対になるデバフが無い）。
+ *
+ * 1 ヒットのダメージ上限（基本 99,999）を効果量だけ引き上げる。効果量は % ではなく絶対値
+ * （例: 100000）で、合算に上限は無い。
+ *
+ * - `damageCapUp` … 全攻撃（説明文で単に「ダメージ上限アップ」と書かれるもの。
+ *   例: リュック「バオール」）。無属性攻撃にも掛かる
+ * - `physicalDamageCapUp` … 全物理
+ * - `elementalDamageCapUp` … 全属性
+ * - 武器種別 8 種・属性別 6 種（例: `swordDamageCapUp`、`iceDamageCapUp`）。
+ *   「氷・風・光属性のいずれかで攻撃時 ダメージ上限アップ」（踊子 リンユウEX「大海の息吹」）のように
+ *   複数の攻撃種別を列挙するものは、攻撃種別ごとに 1 つずつ別のステータス効果として付与する
+ *
+ * 攻撃時にどの種別が掛かるかは {@link DamageCapUpKindDefinition} をマスターデータとして持つ。
+ * 詳細なルールは lib/domain/statusEffect.ts を参照。
+ */
+export type DamageCapUpStatusEffectKind =
+  | "axeDamageCapUp"
+  | "bookDamageCapUp"
+  | "bowDamageCapUp"
+  | "daggerDamageCapUp"
+  | "damageCapUp"
+  | "darkDamageCapUp"
+  | "elementalDamageCapUp"
+  | "fanDamageCapUp"
+  | "fireDamageCapUp"
+  | "iceDamageCapUp"
+  | "lightDamageCapUp"
+  | "lightningDamageCapUp"
+  | "physicalDamageCapUp"
+  | "spearDamageCapUp"
+  | "staffDamageCapUp"
+  | "swordDamageCapUp"
+  | "windDamageCapUp";
+
+/** ダメージ上限アップ系の種別の、攻撃時の合算に使うマスターデータ 1 件。 */
+export type DamageCapUpKindDefinition = {
+  kind: DamageCapUpStatusEffectKind;
+  target: StatusEffectAttackTarget;
+};
+
 /** バフ（強化効果）かデバフ（弱体効果）か。種別の属性であり、種別から決まる。 */
 export type StatusEffectPolarity = "buff" | "debuff";
+
+/**
+ * ステータス効果の効果量の単位。
+ *
+ * - `absolute` … 絶対値（例: ダメージ上限アップの 100000）
+ * - `percent` … %（例: 物攻アップの 15）
+ */
+export type StatusEffectMagnitudeUnit = "absolute" | "percent";
 
 /** ステータス効果の種別のマスターデータ 1 件。 */
 export type StatusEffectKindDefinition = {
@@ -193,10 +247,21 @@ export type StatusEffectKindDefinition = {
   /** 日本語の表示名（例: 物攻アップ）。 */
   name: string;
   polarity: StatusEffectPolarity;
+  /** 効果量の単位。 */
+  magnitudeUnit: StatusEffectMagnitudeUnit;
+  /**
+   * 上限引き上げ効果が無いときの、1 つのまとまりの効果量の上限（単位は magnitudeUnit）。
+   * 上限が無い種別は null で、上限引き上げ効果も指定できない。
+   *
+   * ダメージアップ系では、種別ごとのまとまりではなく「枠 × ダメージ計算の攻撃種別」の合算に掛かる。
+   * 参照されるのは、武器種・属性の攻撃なら対応する武器種別・属性別の種別の値、
+   * 無属性攻撃なら全攻撃（`damageUp`）の値で、全物理・全属性・条件付きの種別の値は参照されない。
+   */
+  defaultMagnitudeCap: number | null;
 };
 
 /**
- * バフ・デバフの「枠」。効果量の上限（基本 30%）は枠ごとに別々に数える。
+ * バフ・デバフの「枠」。効果量の上限（パラメーター系・ダメージアップ系は基本 30%）は枠ごとに別々に数える。
  *
  * - `battleAbility` … バトルアビリティ。支援者・援魔石（神獣を除く）・EX アビリティも含む
  * - `supportAbility` … サポートアビリティと装備性能（アクセサリー等）
@@ -247,7 +312,7 @@ export type StatusEffectSource = {
 export type StatusEffectApplication = {
   slot: StatusEffectSlot;
   kind: StatusEffectKind;
-  /** 効果量（%）。正の値。 */
+  /** 効果量。正の値。単位は種別ごとに決まる（{@link StatusEffectKindDefinition}）。 */
   magnitude: number;
   duration: StatusEffectDuration;
   source: StatusEffectSource;
@@ -263,7 +328,7 @@ export type StatusEffectApplication = {
 /** まとまりに含まれるターン無し効果 1 件。 */
 export type StatusEffectPermanentSource = {
   source: StatusEffectSource;
-  /** 効果量（%）。 */
+  /** 効果量。単位は種別ごとに決まる。 */
   magnitude: number;
 };
 
@@ -279,7 +344,7 @@ export type StatusEffectPool = {
   kind: StatusEffectKind;
   /** ターン無し効果の一覧。 */
   permanentSources: StatusEffectPermanentSource[];
-  /** ターン付き効果の効果量（%）の合計。切れるまで下がらない。 */
+  /** ターン付き効果の効果量の合計。単位は種別ごとに決まる。切れるまで下がらない。 */
   timedMagnitude: number;
   /** ターン付き効果の残りターン数。現在のターンを含む。ターン付き効果が無ければ 0。 */
   remainingTurns: number;
@@ -301,6 +366,7 @@ export type StatusEffectPool = {
  * 「サポアビと装備性能による物理ダメージアップの上限が 50%」（剣士 ヴィオラEX「神器の継承者」）は
  * 8 武器種の種別に 1 件ずつ、「剣攻撃ダメージアップの上限が 50%」は `swordDamageUp` に 1 件付与する。
  * 全物理・全属性・全攻撃・条件付きの種別は指定できない。
+ * 上限の無い種別（ダメージ上限アップ系）も指定できない。
  */
 export type StatusEffectMagnitudeCapApplication = {
   slot: StatusEffectSlot;

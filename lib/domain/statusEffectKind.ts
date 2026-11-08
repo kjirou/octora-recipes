@@ -1,17 +1,22 @@
 /**
  * ステータス効果の種別のマスターデータ。
  *
- * 種別ごとに、バフかデバフか（向き）と日本語の表示名を定義する。
+ * 種別ごとに、バフかデバフか（向き）、日本語の表示名、効果量の単位と既定の上限を定義する。
  * ダメージアップ系の種別には、攻撃時の合算に使う属性（掛かる攻撃種別と発動条件）も定義する。
+ * ダメージ上限アップ系の種別には、攻撃時の合算に使う属性（掛かる攻撃種別）も定義する。
  * 種別を追加するときは lib/types.ts の StatusEffectKind と、ここの定義の両方に加える
  * （Record 型なので、片方だけ加えると型エラーになる）。ダメージアップ系の種別は、
  * lib/types.ts の DamageUpStatusEffectKind・STATUS_EFFECT_KIND_DEFINITIONS・
  * DAMAGE_UP_KIND_DEFINITIONS の 3 か所に加える。武器種別・属性別の種別なら、
- * ATTACK_TYPE_DAMAGE_UP_KINDS も更新する。
+ * ATTACK_TYPE_DAMAGE_UP_KINDS も更新する。ダメージ上限アップ系の種別は、
+ * lib/types.ts の DamageCapUpStatusEffectKind・STATUS_EFFECT_KIND_DEFINITIONS・
+ * DAMAGE_CAP_UP_KIND_DEFINITIONS の 3 か所に加える。
  */
 
 import type {
   AttackType,
+  DamageCapUpKindDefinition,
+  DamageCapUpStatusEffectKind,
   DamageUpKindDefinition,
   DamageUpStatusEffectKind,
   StatusEffectKind,
@@ -19,169 +24,359 @@ import type {
   StatusEffectPolarity,
 } from "@/lib/types";
 
+/**
+ * パラメーター系・ダメージアップ系の、上限引き上げ効果が無いときの効果量（%）の上限。
+ *
+ * パラメーター系では「枠 × 種別」、ダメージアップ系では「枠 × ダメージ計算の攻撃種別」ごとに掛かる。
+ */
+export const DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP = 30;
+
 export const STATUS_EFFECT_KIND_DEFINITIONS: Record<
   StatusEffectKind,
   StatusEffectKindDefinition
 > = {
+  axeDamageCapUp: {
+    kind: "axeDamageCapUp",
+    name: "斧攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
+  },
   axeDamageUp: {
     kind: "axeDamageUp",
     name: "斧攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  bookDamageCapUp: {
+    kind: "bookDamageCapUp",
+    name: "本攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   bookDamageUp: {
     kind: "bookDamageUp",
     name: "本攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  bowDamageCapUp: {
+    kind: "bowDamageCapUp",
+    name: "弓攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   bowDamageUp: {
     kind: "bowDamageUp",
     name: "弓攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   breakDamageUp: {
     kind: "breakDamageUp",
     name: "ブレイク中ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   criticalDamageUp: {
     kind: "criticalDamageUp",
     name: "クリティカル時ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   criticalRateDown: {
     kind: "criticalRateDown",
     name: "会心ダウン",
     polarity: "debuff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   criticalRateUp: {
     kind: "criticalRateUp",
     name: "会心アップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  daggerDamageCapUp: {
+    kind: "daggerDamageCapUp",
+    name: "短剣攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   daggerDamageUp: {
     kind: "daggerDamageUp",
     name: "短剣攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  damageCapUp: {
+    kind: "damageCapUp",
+    name: "ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   damageUp: {
     kind: "damageUp",
     name: "ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  darkDamageCapUp: {
+    kind: "darkDamageCapUp",
+    name: "闇属性ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   darkDamageUp: {
     kind: "darkDamageUp",
     name: "闇属性ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   elementalAttackDown: {
     kind: "elementalAttackDown",
     name: "属攻ダウン",
     polarity: "debuff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   elementalAttackUp: {
     kind: "elementalAttackUp",
     name: "属攻アップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  elementalDamageCapUp: {
+    kind: "elementalDamageCapUp",
+    name: "属性ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   elementalDamageUp: {
     kind: "elementalDamageUp",
     name: "属性ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   elementalDefenseDown: {
     kind: "elementalDefenseDown",
     name: "属防ダウン",
     polarity: "debuff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   elementalDefenseUp: {
     kind: "elementalDefenseUp",
     name: "属防アップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  fanDamageCapUp: {
+    kind: "fanDamageCapUp",
+    name: "扇攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   fanDamageUp: {
     kind: "fanDamageUp",
     name: "扇攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  fireDamageCapUp: {
+    kind: "fireDamageCapUp",
+    name: "火属性ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   fireDamageUp: {
     kind: "fireDamageUp",
     name: "火属性ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  iceDamageCapUp: {
+    kind: "iceDamageCapUp",
+    name: "氷属性ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   iceDamageUp: {
     kind: "iceDamageUp",
     name: "氷属性ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  lightDamageCapUp: {
+    kind: "lightDamageCapUp",
+    name: "光属性ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   lightDamageUp: {
     kind: "lightDamageUp",
     name: "光属性ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  lightningDamageCapUp: {
+    kind: "lightningDamageCapUp",
+    name: "雷属性ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   lightningDamageUp: {
     kind: "lightningDamageUp",
     name: "雷属性ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   physicalAttackDown: {
     kind: "physicalAttackDown",
     name: "物攻ダウン",
     polarity: "debuff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   physicalAttackUp: {
     kind: "physicalAttackUp",
     name: "物攻アップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  physicalDamageCapUp: {
+    kind: "physicalDamageCapUp",
+    name: "物理ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   physicalDamageUp: {
     kind: "physicalDamageUp",
     name: "物理ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   physicalDefenseDown: {
     kind: "physicalDefenseDown",
     name: "物防ダウン",
     polarity: "debuff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   physicalDefenseUp: {
     kind: "physicalDefenseUp",
     name: "物防アップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  spearDamageCapUp: {
+    kind: "spearDamageCapUp",
+    name: "槍攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   spearDamageUp: {
     kind: "spearDamageUp",
     name: "槍攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   speedDown: {
     kind: "speedDown",
     name: "速度ダウン",
     polarity: "debuff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   speedUp: {
     kind: "speedUp",
     name: "速度アップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  staffDamageCapUp: {
+    kind: "staffDamageCapUp",
+    name: "杖攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   staffDamageUp: {
     kind: "staffDamageUp",
     name: "杖攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  swordDamageCapUp: {
+    kind: "swordDamageCapUp",
+    name: "剣攻撃ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   swordDamageUp: {
     kind: "swordDamageUp",
     name: "剣攻撃ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
   weaknessDamageUp: {
     kind: "weaknessDamageUp",
     name: "弱点時ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+  },
+  windDamageCapUp: {
+    kind: "windDamageCapUp",
+    name: "風属性ダメージ上限アップ",
+    polarity: "buff",
+    magnitudeUnit: "absolute",
+    defaultMagnitudeCap: null,
   },
   windDamageUp: {
     kind: "windDamageUp",
     name: "風属性ダメージアップ",
     polarity: "buff",
+    magnitudeUnit: "percent",
+    defaultMagnitudeCap: DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   },
 };
 
@@ -322,6 +517,86 @@ export const ATTACK_TYPE_DAMAGE_UP_KINDS: Record<
   wind: "windDamageUp",
 };
 
+/**
+ * ダメージ上限アップ系の種別の、攻撃時の合算に使うマスターデータ。
+ *
+ * 種別ごとに、掛かる攻撃種別を定義する。武器種別・属性別の種別は、攻撃種別 14 種のそれぞれに
+ * ちょうど 1 つずつ対応する。
+ */
+export const DAMAGE_CAP_UP_KIND_DEFINITIONS: Record<
+  DamageCapUpStatusEffectKind,
+  DamageCapUpKindDefinition
+> = {
+  axeDamageCapUp: {
+    kind: "axeDamageCapUp",
+    target: { type: "attackType", attackType: "axe" },
+  },
+  bookDamageCapUp: {
+    kind: "bookDamageCapUp",
+    target: { type: "attackType", attackType: "book" },
+  },
+  bowDamageCapUp: {
+    kind: "bowDamageCapUp",
+    target: { type: "attackType", attackType: "bow" },
+  },
+  daggerDamageCapUp: {
+    kind: "daggerDamageCapUp",
+    target: { type: "attackType", attackType: "dagger" },
+  },
+  damageCapUp: {
+    kind: "damageCapUp",
+    target: { type: "any" },
+  },
+  darkDamageCapUp: {
+    kind: "darkDamageCapUp",
+    target: { type: "attackType", attackType: "dark" },
+  },
+  elementalDamageCapUp: {
+    kind: "elementalDamageCapUp",
+    target: { type: "elemental" },
+  },
+  fanDamageCapUp: {
+    kind: "fanDamageCapUp",
+    target: { type: "attackType", attackType: "fan" },
+  },
+  fireDamageCapUp: {
+    kind: "fireDamageCapUp",
+    target: { type: "attackType", attackType: "fire" },
+  },
+  iceDamageCapUp: {
+    kind: "iceDamageCapUp",
+    target: { type: "attackType", attackType: "ice" },
+  },
+  lightDamageCapUp: {
+    kind: "lightDamageCapUp",
+    target: { type: "attackType", attackType: "light" },
+  },
+  lightningDamageCapUp: {
+    kind: "lightningDamageCapUp",
+    target: { type: "attackType", attackType: "lightning" },
+  },
+  physicalDamageCapUp: {
+    kind: "physicalDamageCapUp",
+    target: { type: "physical" },
+  },
+  spearDamageCapUp: {
+    kind: "spearDamageCapUp",
+    target: { type: "attackType", attackType: "spear" },
+  },
+  staffDamageCapUp: {
+    kind: "staffDamageCapUp",
+    target: { type: "attackType", attackType: "staff" },
+  },
+  swordDamageCapUp: {
+    kind: "swordDamageCapUp",
+    target: { type: "attackType", attackType: "sword" },
+  },
+  windDamageCapUp: {
+    kind: "windDamageCapUp",
+    target: { type: "attackType", attackType: "wind" },
+  },
+};
+
 /** すべての種別を定義順（ASCII 順）で返す。 */
 export const listStatusEffectKinds = (): StatusEffectKind[] =>
   Object.keys(STATUS_EFFECT_KIND_DEFINITIONS) as StatusEffectKind[];
@@ -345,6 +620,16 @@ export const isDamageUpStatusEffectKind = (
 /** すべてのダメージアップ系の種別のマスターデータを定義順（ASCII 順）で返す。 */
 export const listDamageUpKindDefinitions = (): DamageUpKindDefinition[] =>
   Object.values(DAMAGE_UP_KIND_DEFINITIONS);
+
+/** ダメージ上限アップ系の種別かを返す。 */
+export const isDamageCapUpStatusEffectKind = (
+  kind: StatusEffectKind,
+): kind is DamageCapUpStatusEffectKind =>
+  Object.hasOwn(DAMAGE_CAP_UP_KIND_DEFINITIONS, kind);
+
+/** すべてのダメージ上限アップ系の種別のマスターデータを定義順（ASCII 順）で返す。 */
+export const listDamageCapUpKindDefinitions = (): DamageCapUpKindDefinition[] =>
+  Object.values(DAMAGE_CAP_UP_KIND_DEFINITIONS);
 
 /**
  * 指定した武器種・属性に対応する、武器種別・属性別のダメージアップの種別を返す
