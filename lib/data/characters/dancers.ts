@@ -8,11 +8,11 @@ export const dancerCharactersJson = [
     job: "dancer",
     influence: "power",
     rarity: 5,
-    abilityDataIds: [
+    activeAbilityDataIds: [
       "rocbouquet:temptationEx",
-      "rocbouquet:alluringInvitationTomoshibi",
       "rocbouquet:passionPerfume",
     ],
+    passiveAbilityDataIds: ["rocbouquet:alluringInvitationTomoshibi"],
   },
 ] as const satisfies ReadonlyArray<CharacterDataDef>;
 

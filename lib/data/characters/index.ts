@@ -28,12 +28,13 @@
 //   4. job
 //   5. influence
 //   6. rarity
-//   7. abilityDataIds   -- 並び順は lib/data/abilities/index.ts のエントリの並び順に合わせる
+//   7. activeAbilityDataIds    -- 並び順は lib/data/activeAbilities/index.ts のエントリの並び順に合わせる
+//   8. passiveAbilityDataIds   -- 並び順は lib/data/passiveAbilities/index.ts のエントリの並び順に合わせる
 //
 // グルーピングの意図:
 //   - 識別:  id / name / englishName
 //   - 分類:  job / influence / rarity
-//   - 能力:  abilityDataIds
+//   - 能力:  activeAbilityDataIds / passiveAbilityDataIds
 //
 // ## エントリの並び順
 //

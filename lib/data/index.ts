@@ -7,12 +7,21 @@
 
 import type { DataCatalog } from "@/lib/types";
 
-import { abilityDataDict, abilityDataList } from "./abilities";
+import {
+  activeAbilityDataDict,
+  activeAbilityDataList,
+} from "./activeAbilities";
 import { characterDataDict, characterDataList } from "./characters";
+import {
+  passiveAbilityDataDict,
+  passiveAbilityDataList,
+} from "./passiveAbilities";
 
 export const dataCatalog: DataCatalog = {
-  abilityDataDict,
-  abilityDataList,
+  activeAbilityDataDict,
+  activeAbilityDataList,
   characterDataDict,
   characterDataList,
+  passiveAbilityDataDict,
+  passiveAbilityDataList,
 };

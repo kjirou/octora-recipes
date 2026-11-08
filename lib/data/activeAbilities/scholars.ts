@@ -1,7 +1,7 @@
-import type { AbilityDataDef } from "@/lib/types";
+import type { ActiveAbilityDataDef } from "@/lib/types";
 
-/** ジョブが学者のキャラクターが持つアビリティ。 */
-export const scholarAbilitiesJson = [
+/** ジョブが学者のキャラクターが持つアクティブアビリティ。 */
+export const scholarActiveAbilitiesJson = [
   // --- カザン ---
   {
     id: "kazan:ikkon",
@@ -30,15 +30,11 @@ export const scholarAbilitiesJson = [
     category: "battleAbility",
   },
   {
-    id: "lueck:albedoChieftainsDaughter",
-    name: "アルベド族長の娘",
-    category: "supportAbility",
-  },
-  {
     id: "lueck:mixFinalElixir",
     name: "調合：ファイナルエリクサー",
     category: "ultimate",
   },
-] as const satisfies ReadonlyArray<AbilityDataDef>;
+] as const satisfies ReadonlyArray<ActiveAbilityDataDef>;
 
-export type ScholarAbilityDataId = (typeof scholarAbilitiesJson)[number]["id"];
+export type ScholarActiveAbilityDataId =
+  (typeof scholarActiveAbilitiesJson)[number]["id"];

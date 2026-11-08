@@ -91,38 +91,57 @@ export type Rarity = 3 | 4 | 5;
 /** マスターデータの ID。データ種別の中で一意。 */
 export type DataId = string;
 
+// アビリティはアクティブアビリティとパッシブアビリティに大別する。両者は扱いが大きく異なるため、
+// 型もデータ種別（lib/data/activeAbilities/ と lib/data/passiveAbilities/）も分ける。
+// どちらもキャラクターへの参照は持たない（キャラクター側が ID の一覧で参照する）。
+// 効果の内容（付与するステータス効果・威力アップなど）は未定義。
+
 /**
- * アビリティの種類。
+ * アクティブアビリティの種類。プレイヤーが行動として選択して使うもの。
  *
  * - `battleAbility` … バトルアビリティ（SP 消費）
  * - `exAbility` … EX アビリティ（使用回数制限のあるバトルアビリティ）
- * - `supportAbility` … サポートアビリティ（自動発動、行動を消費しない）
  * - `ultimate` … 必殺技
  */
-export type AbilityCategory =
-  "battleAbility" | "exAbility" | "supportAbility" | "ultimate";
+export type ActiveAbilityCategory = "battleAbility" | "exAbility" | "ultimate";
 
-/**
- * アビリティのデータ定義用の型。
- *
- * キャラクターへの参照は持たない（キャラクター側が {@link CharacterDataDef.abilityDataIds} で参照する）。
- * 効果の内容（付与するステータス効果・威力アップなど）は未定義。
- */
-export type AbilityDataDef = Readonly<{
-  category: AbilityCategory;
-  /** 一意な ID（例: `"lueck:albedoChieftainsDaughter"`）。命名規則は lib/data/abilities/index.ts を参照。 */
+/** アクティブアビリティのデータ定義用の型。 */
+export type ActiveAbilityDataDef = Readonly<{
+  category: ActiveAbilityCategory;
+  /** 一意な ID（例: `"lueck:mixBlasterMine"`）。命名規則は lib/data/activeAbilities/index.ts を参照。 */
   id: DataId;
   /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"調合：ブラスターマイン"`）。 */
   name: string;
 }>;
 
-/** アビリティの読み取り専用データ。 */
-export type AbilityData = Readonly<Required<AbilityDataDef>>;
+/** アクティブアビリティの読み取り専用データ。 */
+export type ActiveAbilityData = Readonly<Required<ActiveAbilityDataDef>>;
+
+/**
+ * パッシブアビリティの種類。行動を消費せず自動で効く（または常時掛かる）もの。
+ *
+ * - `supportAbility` … サポートアビリティ（後衛からでも発動する）
+ *
+ * 今後、ベーシックアビリティ・灯火の加護・灯火の加護強化ボーナスを追加する。
+ */
+export type PassiveAbilityCategory = "supportAbility";
+
+/** パッシブアビリティのデータ定義用の型。 */
+export type PassiveAbilityDataDef = Readonly<{
+  category: PassiveAbilityCategory;
+  /** 一意な ID（例: `"lueck:albedoChieftainsDaughter"`）。命名規則は lib/data/passiveAbilities/index.ts を参照。 */
+  id: DataId;
+  /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"アルベド族長の娘"`）。 */
+  name: string;
+}>;
+
+/** パッシブアビリティの読み取り専用データ。 */
+export type PassiveAbilityData = Readonly<Required<PassiveAbilityDataDef>>;
 
 /** キャラクター（旅人）のデータ定義用の型。 */
 export type CharacterDataDef = Readonly<{
-  /** そのキャラクターが持つアビリティの ID 一覧。 */
-  abilityDataIds: readonly DataId[];
+  /** そのキャラクターが持つアクティブアビリティの ID 一覧。 */
+  activeAbilityDataIds: readonly DataId[];
   /**
    * 英語版での表示名。
    *
@@ -135,6 +154,8 @@ export type CharacterDataDef = Readonly<{
   job: Job;
   /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"七英雄ロックブーケ"`）。 */
   name: string;
+  /** そのキャラクターが持つパッシブアビリティの ID 一覧。 */
+  passiveAbilityDataIds: readonly DataId[];
   rarity: Rarity;
 }>;
 
@@ -147,10 +168,12 @@ export type CharacterData = Readonly<Required<CharacterDataDef>>;
  * ロジック側は lib/data/ を直接 import せず、これを引数で受け取る。
  */
 export type DataCatalog = Readonly<{
-  abilityDataDict: Readonly<Record<DataId, AbilityData>>;
-  abilityDataList: ReadonlyArray<AbilityData>;
+  activeAbilityDataDict: Readonly<Record<DataId, ActiveAbilityData>>;
+  activeAbilityDataList: ReadonlyArray<ActiveAbilityData>;
   characterDataDict: Readonly<Record<DataId, CharacterData>>;
   characterDataList: ReadonlyArray<CharacterData>;
+  passiveAbilityDataDict: Readonly<Record<DataId, PassiveAbilityData>>;
+  passiveAbilityDataList: ReadonlyArray<PassiveAbilityData>;
 }>;
 
 // =============================================================================

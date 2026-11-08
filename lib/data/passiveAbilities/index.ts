@@ -1,0 +1,90 @@
+//
+// パッシブアビリティデータ定義のガイドライン
+//
+// パッシブアビリティは、行動を消費せず自動で効く（または常時掛かる）アビリティ
+// （現時点ではサポートアビリティのみ。今後、ベーシックアビリティ・灯火の加護・
+// 灯火の加護強化ボーナスを追加する）。アクティブアビリティは
+// lib/data/activeAbilities/ に置き、ここには混ぜない。
+//
+// ## 分割ファイルの単位
+//
+// アビリティを持つキャラクターのジョブごとに分割する（lib/data/characters/ と同じ単位）。
+// ファイル名はジョブの複数形にする。
+//
+//   dancers.ts    -- 踊子
+//   scholars.ts   -- 学者
+//
+// 複数のキャラクターが共有するアビリティを追加するときは、ジョブ別とは別の分割ファイルを作る。
+// データが増えた段階で分割の単位は見直してよい。
+//
+// ## ID の命名規則
+//
+// lib/data/activeAbilities/ と共通の規則。ID の一意性はデータ種別の中で保証する。
+//
+// - lower camel case で書く
+// - キャラクター固有のアビリティは `<キャラクター ID>:<アビリティ名>` にする
+//   （例: `lueck:albedoChieftainsDaughter`）。同名のアビリティでもキャラクターが違えば別物で、
+//   ID はデータ種別の中で一意にする必要があるため
+// - アビリティ名の部分は英訳が分かればその英訳、分からなければ日本語のローマ字にする
+//   （例: `kazan:ikkon`）
+// - 「調合：」のような接頭辞は英訳して含める（例: `lueck:mixBlasterMine`）
+// - 「灯火」などの強化版は別のアビリティとして扱い、ID の末尾に付ける
+//   （例: `rocbouquet:alluringInvitationTomoshibi`）
+//
+// ## プロパティの記述順
+//
+// データ定義側ではアルファベット順ではなく、以下の固有順で並べる。
+// （型定義側 PassiveAbilityDataDef は ASCII 順なので順序が異なる）
+//
+//   1. id
+//   2. name
+//   3. category
+//
+// ## エントリの並び順
+//
+// 分割ファイルの中ではキャラクター ID の ASCII 順にまとめ、キャラクターの中では
+// ゲーム内の表示順に合わせる。
+//
+
+import { createDataDict } from "@/lib/dataDefinitionUtils";
+import type {
+  DataId,
+  PassiveAbilityData,
+  PassiveAbilityDataDef,
+} from "@/lib/types";
+
+import {
+  type DancerPassiveAbilityDataId,
+  dancerPassiveAbilitiesJson,
+} from "./dancers";
+import {
+  type ScholarPassiveAbilityDataId,
+  scholarPassiveAbilitiesJson,
+} from "./scholars";
+
+export type PassiveAbilityDataId =
+  DancerPassiveAbilityDataId | ScholarPassiveAbilityDataId;
+
+export const passiveAbilitiesJson = [
+  ...dancerPassiveAbilitiesJson,
+  ...scholarPassiveAbilitiesJson,
+];
+
+const resolvePassiveAbilityData = (
+  def: PassiveAbilityDataDef,
+): PassiveAbilityData => ({
+  ...def,
+});
+
+export const passiveAbilityDataList: ReadonlyArray<PassiveAbilityData> =
+  passiveAbilitiesJson.map(resolvePassiveAbilityData);
+
+export const passiveAbilityDataDict = createDataDict<
+  DataId,
+  PassiveAbilityData
+>(passiveAbilityDataList, "id");
+
+export const isPassiveAbilityDataId = (
+  value: string,
+): value is PassiveAbilityDataId =>
+  Object.hasOwn(passiveAbilityDataDict, value);

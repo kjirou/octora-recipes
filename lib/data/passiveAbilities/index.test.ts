@@ -2,30 +2,35 @@ import { describe, expect, it, test } from "vitest";
 
 import { findDuplicateIds } from "../testHelper";
 
-import { abilityDataList, isAbilityDataId } from ".";
+import { isPassiveAbilityDataId, passiveAbilityDataList } from ".";
 
-describe("abilityDataList", () => {
-  it("アビリティの id が重複していない", () => {
-    expect(findDuplicateIds(abilityDataList)).toStrictEqual([]);
+describe("passiveAbilityDataList", () => {
+  it("パッシブアビリティの id が重複していない", () => {
+    expect(findDuplicateIds(passiveAbilityDataList)).toStrictEqual([]);
   });
 
   describe("id", () => {
-    test.each(abilityDataList)("$id は命名規則に従う", (ability) => {
+    test.each(passiveAbilityDataList)("$id は命名規則に従う", (ability) => {
       expect(ability.id).toMatch(/^([a-z][a-zA-Z0-9]*:)?[a-z][a-zA-Z0-9]*$/);
     });
   });
 });
 
-describe("isAbilityDataId", () => {
+describe("isPassiveAbilityDataId", () => {
   test.each<{
     name: string;
-    args: Parameters<typeof isAbilityDataId>;
-    expected: ReturnType<typeof isAbilityDataId>;
+    args: Parameters<typeof isPassiveAbilityDataId>;
+    expected: ReturnType<typeof isPassiveAbilityDataId>;
   }>([
     {
       name: "定義されている ID なら true を返す",
       args: ["lueck:albedoChieftainsDaughter"],
       expected: true,
+    },
+    {
+      name: "アクティブアビリティの ID なら false を返す",
+      args: ["lueck:mixBlasterMine"],
+      expected: false,
     },
     {
       name: "定義されていない ID なら false を返す",
@@ -38,6 +43,6 @@ describe("isAbilityDataId", () => {
       expected: false,
     },
   ])("$name", ({ args, expected }) => {
-    expect(isAbilityDataId(...args)).toBe(expected);
+    expect(isPassiveAbilityDataId(...args)).toBe(expected);
   });
 });

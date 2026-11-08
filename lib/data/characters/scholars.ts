@@ -8,7 +8,12 @@ export const scholarCharactersJson = [
     job: "scholar",
     influence: "power",
     rarity: 5,
-    abilityDataIds: ["kazan:ikkon", "kazan:shukuen", "kazan:shisenHappenNoKei"],
+    activeAbilityDataIds: [
+      "kazan:ikkon",
+      "kazan:shukuen",
+      "kazan:shisenHappenNoKei",
+    ],
+    passiveAbilityDataIds: [],
   },
   {
     id: "lueck",
@@ -16,12 +21,12 @@ export const scholarCharactersJson = [
     job: "scholar",
     influence: "wealth",
     rarity: 5,
-    abilityDataIds: [
+    activeAbilityDataIds: [
       "lueck:mixBlasterMine",
       "lueck:mixBaoru",
-      "lueck:albedoChieftainsDaughter",
       "lueck:mixFinalElixir",
     ],
+    passiveAbilityDataIds: ["lueck:albedoChieftainsDaughter"],
   },
 ] as const satisfies ReadonlyArray<CharacterDataDef>;
 

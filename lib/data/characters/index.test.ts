@@ -1,6 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 
-import { abilityDataDict } from "../abilities";
+import { activeAbilityDataDict } from "../activeAbilities";
+import { passiveAbilityDataDict } from "../passiveAbilities";
 import { findDuplicateIds } from "../testHelper";
 
 import { characterDataList, isCharacterDataId } from ".";
@@ -18,18 +19,32 @@ describe("characterDataList", () => {
 
   describe("データのリレーション", () => {
     test.each(characterDataList)("$id", (character) => {
-      for (const abilityDataId of character.abilityDataIds) {
-        expect(abilityDataDict).toHaveProperty([abilityDataId]);
+      for (const id of character.activeAbilityDataIds) {
+        expect(activeAbilityDataDict).toHaveProperty([id]);
+      }
+      for (const id of character.passiveAbilityDataIds) {
+        expect(passiveAbilityDataDict).toHaveProperty([id]);
       }
     });
   });
 
-  describe("abilityDataIds", () => {
+  describe.each([
+    {
+      property: "activeAbilityDataIds",
+      getIds: (character: (typeof characterDataList)[number]) =>
+        character.activeAbilityDataIds,
+    },
+    {
+      property: "passiveAbilityDataIds",
+      getIds: (character: (typeof characterDataList)[number]) =>
+        character.passiveAbilityDataIds,
+    },
+  ])("$property", ({ getIds }) => {
     test.each(characterDataList)(
       "$id は同じアビリティを重複して持たない",
       (character) => {
         expect(
-          findDuplicateIds(character.abilityDataIds.map((id) => ({ id }))),
+          findDuplicateIds(getIds(character).map((id) => ({ id }))),
         ).toStrictEqual([]);
       },
     );
@@ -37,7 +52,7 @@ describe("characterDataList", () => {
     test.each(characterDataList)(
       "$id のキャラクター固有のアビリティの ID は自身の ID を接頭辞に持つ",
       (character) => {
-        const prefixes = character.abilityDataIds
+        const prefixes = getIds(character)
           .filter((id) => id.includes(":"))
           .map((id) => id.split(":")[0]);
         for (const prefix of prefixes) {
