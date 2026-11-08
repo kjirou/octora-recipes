@@ -35,10 +35,6 @@ const osvaldPriceOfMagic: StatusEffectSource = {
   characterId: "osvaldEx",
   abilityId: "priceOfMagic",
 };
-const rocbouquetPassionPerfume: StatusEffectSource = {
-  characterId: "rocbouquet",
-  abilityId: "passionPerfume",
-};
 const violaEssenceOfDivineWeapon: StatusEffectSource = {
   characterId: "violaEx",
   abilityId: "essenceOfDivineWeapon",
@@ -50,6 +46,16 @@ const fireAmplifier: StatusEffectSource = {
 const huntressWeapon: StatusEffectSource = {
   characterId: "violaEx",
   abilityId: "huntressWeapon4",
+};
+/** 無条件のターン無し効果の付与元（ヴィオラ EX とは別の付与元）。 */
+const unconditionalPermanentSource: StatusEffectSource = {
+  characterId: "other",
+  abilityId: "unconditionalPermanentPowerUp",
+};
+/** バトアビで威力アップを付与する、オズバルド EX とは別の付与元。 */
+const otherBattleAbilitySource: StatusEffectSource = {
+  characterId: "other",
+  abilityId: "battleAbilityPowerUp",
 };
 
 /** テスト用に、省略可能な項目を埋めた付与内容を作る。 */
@@ -194,7 +200,7 @@ describe("getPowerUpPoolMagnitude", () => {
           createPool({
             permanentSources: [
               { source: violaEssenceOfDivineWeapon, magnitude: 100 },
-              { source: fireAmplifier, magnitude: 75 },
+              { source: unconditionalPermanentSource, magnitude: 75 },
             ],
           }),
         ]),
@@ -428,7 +434,7 @@ describe("applyPowerUp", () => {
         createApplication({
           magnitude: 100,
           duration: turns(3),
-          source: rocbouquetPassionPerfume,
+          source: otherBattleAbilitySource,
         }),
       ],
       expected: createState([
@@ -472,7 +478,7 @@ describe("applyPowerUp", () => {
           slot: "supportAbility",
           magnitude: 75,
           duration: permanent,
-          source: fireAmplifier,
+          source: unconditionalPermanentSource,
         }),
       ],
       expected: createState([
@@ -480,7 +486,7 @@ describe("applyPowerUp", () => {
           slot: "supportAbility",
           permanentSources: [
             { source: violaEssenceOfDivineWeapon, magnitude: 100 },
-            { source: fireAmplifier, magnitude: 75 },
+            { source: unconditionalPermanentSource, magnitude: 75 },
           ],
         }),
       ]),
@@ -587,7 +593,7 @@ describe("removePermanentPowerUp", () => {
           createPool({
             permanentSources: [
               { source: violaEssenceOfDivineWeapon, magnitude: 100 },
-              { source: fireAmplifier, magnitude: 75 },
+              { source: unconditionalPermanentSource, magnitude: 75 },
             ],
           }),
         ]),
@@ -595,7 +601,9 @@ describe("removePermanentPowerUp", () => {
       ],
       expected: createState([
         createPool({
-          permanentSources: [{ source: fireAmplifier, magnitude: 75 }],
+          permanentSources: [
+            { source: unconditionalPermanentSource, magnitude: 75 },
+          ],
         }),
       ]),
     },
