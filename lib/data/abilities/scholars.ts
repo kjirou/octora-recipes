@@ -14,28 +14,28 @@ export const scholarAbilitiesJson = [
     category: "battleAbility",
   },
   {
-    id: "kazan:shisen_happen_no_kei",
+    id: "kazan:shisenHappenNoKei",
     name: "四旋八焔の計",
     category: "ultimate",
   },
   // --- リュック ---
   {
-    id: "lueck:mix_blaster_mine",
+    id: "lueck:mixBlasterMine",
     name: "調合：ブラスターマイン",
     category: "battleAbility",
   },
   {
-    id: "lueck:mix_baoru",
+    id: "lueck:mixBaoru",
     name: "調合：バオール",
     category: "battleAbility",
   },
   {
-    id: "lueck:albedo_chieftains_daughter",
+    id: "lueck:albedoChieftainsDaughter",
     name: "アルベド族長の娘",
     category: "supportAbility",
   },
   {
-    id: "lueck:mix_final_elixir",
+    id: "lueck:mixFinalElixir",
     name: "調合：ファイナルエリクサー",
     category: "ultimate",
   },

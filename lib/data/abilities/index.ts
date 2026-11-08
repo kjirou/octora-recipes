@@ -14,15 +14,15 @@
 //
 // ## ID の命名規則
 //
-// - snake_case で書く
+// - lower camel case で書く
 // - キャラクター固有のアビリティは `<キャラクター ID>:<アビリティ名>` にする
-//   （例: `lueck:albedo_chieftains_daughter`）。同名のアビリティでもキャラクターが違えば別物で、
+//   （例: `lueck:albedoChieftainsDaughter`）。同名のアビリティでもキャラクターが違えば別物で、
 //   ID は全アビリティで一意にする必要があるため
 // - アビリティ名の部分は英訳が分かればその英訳、分からなければ日本語のローマ字にする
 //   （例: `kazan:ikkon`）
-// - 「調合：」のような接頭辞は英訳して含める（例: `lueck:mix_blaster_mine`）
+// - 「調合：」のような接頭辞は英訳して含める（例: `lueck:mixBlasterMine`）
 // - 「灯火」などの強化版は別のアビリティとして扱い、ID の末尾に付ける
-//   （例: `rocbouquet:alluring_invitation_tomoshibi`）
+//   （例: `rocbouquet:alluringInvitationTomoshibi`）
 //
 // ## プロパティの記述順
 //

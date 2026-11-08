@@ -9,9 +9,9 @@ export const dancerCharactersJson = [
     influence: "power",
     rarity: 5,
     abilityDataIds: [
-      "rocbouquet:temptation_ex",
-      "rocbouquet:alluring_invitation_tomoshibi",
-      "rocbouquet:passion_perfume",
+      "rocbouquet:temptationEx",
+      "rocbouquet:alluringInvitationTomoshibi",
+      "rocbouquet:passionPerfume",
     ],
   },
 ] as const satisfies ReadonlyArray<CharacterDataDef>;

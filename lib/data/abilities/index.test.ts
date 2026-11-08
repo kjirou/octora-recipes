@@ -11,7 +11,7 @@ describe("abilityDataList", () => {
 
   describe("id", () => {
     test.each(abilityDataList)("$id は命名規則に従う", (ability) => {
-      expect(ability.id).toMatch(/^([a-z0-9_]+:)?[a-z0-9_]+$/);
+      expect(ability.id).toMatch(/^([a-z][a-zA-Z0-9]*:)?[a-z][a-zA-Z0-9]*$/);
     });
   });
 });
@@ -24,7 +24,7 @@ describe("isAbilityDataId", () => {
   }>([
     {
       name: "定義されている ID なら true を返す",
-      args: ["lueck:albedo_chieftains_daughter"],
+      args: ["lueck:albedoChieftainsDaughter"],
       expected: true,
     },
     {

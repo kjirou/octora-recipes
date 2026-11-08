@@ -10,6 +10,12 @@ describe("characterDataList", () => {
     expect(findDuplicateIds(characterDataList)).toStrictEqual([]);
   });
 
+  describe("id", () => {
+    test.each(characterDataList)("$id は命名規則に従う", (character) => {
+      expect(character.id).toMatch(/^[a-z][a-zA-Z0-9]*$/);
+    });
+  });
+
   describe("データのリレーション", () => {
     test.each(characterDataList)("$id", (character) => {
       for (const abilityDataId of character.abilityDataIds) {

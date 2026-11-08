@@ -110,7 +110,7 @@ export type AbilityCategory =
  */
 export type AbilityDataDef = Readonly<{
   category: AbilityCategory;
-  /** 一意な ID（例: `"lueck:albedo_chieftains_daughter"`）。命名規則は lib/data/abilities/index.ts を参照。 */
+  /** 一意な ID（例: `"lueck:albedoChieftainsDaughter"`）。命名規則は lib/data/abilities/index.ts を参照。 */
   id: DataId;
   /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"調合：ブラスターマイン"`）。 */
   name: string;
