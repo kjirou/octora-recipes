@@ -1,8 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 
-import type { AttackType } from "@/lib/types";
-
 import {
+  ATTACK_TYPE_DAMAGE_UP_KINDS,
   DAMAGE_UP_KIND_DEFINITIONS,
   STATUS_EFFECT_KIND_DEFINITIONS,
   getAttackTypeDamageUpKind,
@@ -43,6 +42,28 @@ describe("DAMAGE_UP_KIND_DEFINITIONS", () => {
     for (const { kind } of Object.values(DAMAGE_UP_KIND_DEFINITIONS)) {
       expect(getStatusEffectPolarity(kind)).toBe("buff");
     }
+  });
+});
+
+describe("ATTACK_TYPE_DAMAGE_UP_KINDS", () => {
+  it("対応表の種別は、定義上その攻撃種別を対象にしている", () => {
+    for (const [attackType, kind] of Object.entries(
+      ATTACK_TYPE_DAMAGE_UP_KINDS,
+    )) {
+      expect(DAMAGE_UP_KIND_DEFINITIONS[kind].target).toStrictEqual({
+        type: "attackType",
+        attackType,
+      });
+    }
+  });
+
+  it("攻撃種別を対象にする定義は、すべて対応表に含まれる", () => {
+    const attackTypeKinds = listDamageUpKindDefinitions()
+      .filter(({ target }) => target.type === "attackType")
+      .map(({ kind }) => kind);
+    expect(Object.values(ATTACK_TYPE_DAMAGE_UP_KINDS).sort()).toStrictEqual(
+      attackTypeKinds,
+    );
   });
 });
 
@@ -199,26 +220,5 @@ describe("getAttackTypeDamageUpKind", () => {
     },
   ])("$name", ({ args, expected }) => {
     expect(getAttackTypeDamageUpKind(...args)).toBe(expected);
-  });
-
-  it("攻撃種別 14 種がそれぞれ別の種別に対応する", () => {
-    const attackTypes: AttackType[] = [
-      "axe",
-      "book",
-      "bow",
-      "dagger",
-      "fan",
-      "spear",
-      "staff",
-      "sword",
-      "dark",
-      "fire",
-      "ice",
-      "light",
-      "lightning",
-      "wind",
-    ];
-    const kinds = attackTypes.map(getAttackTypeDamageUpKind);
-    expect(new Set(kinds).size).toBe(14);
   });
 });

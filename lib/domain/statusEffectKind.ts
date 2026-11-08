@@ -4,7 +4,10 @@
  * 種別ごとに、バフかデバフか（向き）と日本語の表示名を定義する。
  * ダメージアップ系の種別には、攻撃時の合算に使う属性（掛かる攻撃種別と発動条件）も定義する。
  * 種別を追加するときは lib/types.ts の StatusEffectKind と、ここの定義の両方に加える
- * （Record 型なので、片方だけ加えると型エラーになる）。
+ * （Record 型なので、片方だけ加えると型エラーになる）。ダメージアップ系の種別は、
+ * lib/types.ts の DamageUpStatusEffectKind・STATUS_EFFECT_KIND_DEFINITIONS・
+ * DAMAGE_UP_KIND_DEFINITIONS の 3 か所に加える。武器種別・属性別の種別なら、
+ * ATTACK_TYPE_DAMAGE_UP_KINDS も更新する。
  */
 
 import type {
@@ -294,6 +297,31 @@ export const DAMAGE_UP_KIND_DEFINITIONS: Record<
   },
 };
 
+/**
+ * 武器種・属性と、それに対応する武器種別・属性別のダメージアップの種別の対応表。
+ *
+ * {@link DAMAGE_UP_KIND_DEFINITIONS} の `target.type === "attackType"` の定義と 1 対 1 に対応する。
+ */
+export const ATTACK_TYPE_DAMAGE_UP_KINDS: Record<
+  AttackType,
+  DamageUpStatusEffectKind
+> = {
+  axe: "axeDamageUp",
+  book: "bookDamageUp",
+  bow: "bowDamageUp",
+  dagger: "daggerDamageUp",
+  dark: "darkDamageUp",
+  fan: "fanDamageUp",
+  fire: "fireDamageUp",
+  ice: "iceDamageUp",
+  light: "lightDamageUp",
+  lightning: "lightningDamageUp",
+  spear: "spearDamageUp",
+  staff: "staffDamageUp",
+  sword: "swordDamageUp",
+  wind: "windDamageUp",
+};
+
 /** すべての種別を定義順（ASCII 順）で返す。 */
 export const listStatusEffectKinds = (): StatusEffectKind[] =>
   Object.keys(STATUS_EFFECT_KIND_DEFINITIONS) as StatusEffectKind[];
@@ -324,15 +352,4 @@ export const listDamageUpKindDefinitions = (): DamageUpKindDefinition[] =>
  */
 export const getAttackTypeDamageUpKind = (
   attackType: AttackType,
-): DamageUpStatusEffectKind => {
-  const definition = listDamageUpKindDefinitions().find(
-    ({ target }) =>
-      target.type === "attackType" && target.attackType === attackType,
-  );
-  if (definition === undefined) {
-    throw new Error(
-      `攻撃種別に対応するダメージアップの種別がありません: ${attackType}`,
-    );
-  }
-  return definition.kind;
-};
+): DamageUpStatusEffectKind => ATTACK_TYPE_DAMAGE_UP_KINDS[attackType];
