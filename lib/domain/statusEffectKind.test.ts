@@ -1,9 +1,14 @@
 import { describe, expect, it, test } from "vitest";
 
 import {
+  ATTACK_TYPE_DAMAGE_UP_KINDS,
+  DAMAGE_UP_KIND_DEFINITIONS,
   STATUS_EFFECT_KIND_DEFINITIONS,
+  getAttackTypeDamageUpKind,
   getStatusEffectKindDefinition,
   getStatusEffectPolarity,
+  isDamageUpStatusEffectKind,
+  listDamageUpKindDefinitions,
   listStatusEffectKinds,
 } from "./statusEffectKind";
 
@@ -24,11 +29,49 @@ describe("STATUS_EFFECT_KIND_DEFINITIONS", () => {
   });
 });
 
+describe("DAMAGE_UP_KIND_DEFINITIONS", () => {
+  it("キーと定義内の kind が一致している", () => {
+    for (const [key, definition] of Object.entries(
+      DAMAGE_UP_KIND_DEFINITIONS,
+    )) {
+      expect(definition.kind).toBe(key);
+    }
+  });
+
+  it("ダメージアップ系の種別はすべてバフ", () => {
+    for (const { kind } of Object.values(DAMAGE_UP_KIND_DEFINITIONS)) {
+      expect(getStatusEffectPolarity(kind)).toBe("buff");
+    }
+  });
+});
+
+describe("ATTACK_TYPE_DAMAGE_UP_KINDS", () => {
+  it("対応表の種別は、定義上その攻撃種別を対象にしている", () => {
+    for (const [attackType, kind] of Object.entries(
+      ATTACK_TYPE_DAMAGE_UP_KINDS,
+    )) {
+      expect(DAMAGE_UP_KIND_DEFINITIONS[kind].target).toStrictEqual({
+        type: "attackType",
+        attackType,
+      });
+    }
+  });
+
+  it("攻撃種別を対象にする定義は、すべて対応表に含まれる", () => {
+    const attackTypeKinds = listDamageUpKindDefinitions()
+      .filter(({ target }) => target.type === "attackType")
+      .map(({ kind }) => kind);
+    expect(Object.values(ATTACK_TYPE_DAMAGE_UP_KINDS).sort()).toStrictEqual(
+      attackTypeKinds,
+    );
+  });
+});
+
 describe("listStatusEffectKinds", () => {
   it("すべての種別を ASCII 順で返す", () => {
     const kinds = listStatusEffectKinds();
     expect(kinds).toStrictEqual([...kinds].sort());
-    expect(kinds).toHaveLength(12);
+    expect(kinds).toHaveLength(32);
   });
 });
 
@@ -105,5 +148,77 @@ describe("getStatusEffectPolarity", () => {
     { name: "速度アップはバフ", args: ["speedUp"], expected: "buff" },
   ])("$name", ({ args, expected }) => {
     expect(getStatusEffectPolarity(...args)).toBe(expected);
+  });
+});
+
+describe("isDamageUpStatusEffectKind", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof isDamageUpStatusEffectKind>;
+    expected: ReturnType<typeof isDamageUpStatusEffectKind>;
+  }>([
+    {
+      name: "剣攻撃ダメージアップはダメージアップ系",
+      args: ["swordDamageUp"],
+      expected: true,
+    },
+    {
+      name: "ダメージアップ（全攻撃）はダメージアップ系",
+      args: ["damageUp"],
+      expected: true,
+    },
+    {
+      name: "弱点時ダメージアップはダメージアップ系",
+      args: ["weaknessDamageUp"],
+      expected: true,
+    },
+    {
+      name: "物攻アップはダメージアップ系ではない",
+      args: ["physicalAttackUp"],
+      expected: false,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(isDamageUpStatusEffectKind(...args)).toBe(expected);
+  });
+});
+
+describe("listDamageUpKindDefinitions", () => {
+  it("20 種の定義を ASCII 順で返す", () => {
+    const kinds = listDamageUpKindDefinitions().map(
+      (definition) => definition.kind,
+    );
+    expect(kinds).toStrictEqual([...kinds].sort());
+    expect(kinds).toHaveLength(20);
+  });
+});
+
+describe("getAttackTypeDamageUpKind", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof getAttackTypeDamageUpKind>;
+    expected: ReturnType<typeof getAttackTypeDamageUpKind>;
+  }>([
+    {
+      name: "剣は剣攻撃ダメージアップ",
+      args: ["sword"],
+      expected: "swordDamageUp",
+    },
+    {
+      name: "扇は扇攻撃ダメージアップ",
+      args: ["fan"],
+      expected: "fanDamageUp",
+    },
+    {
+      name: "氷は氷属性ダメージアップ",
+      args: ["ice"],
+      expected: "iceDamageUp",
+    },
+    {
+      name: "雷は雷属性ダメージアップ",
+      args: ["lightning"],
+      expected: "lightningDamageUp",
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(getAttackTypeDamageUpKind(...args)).toBe(expected);
   });
 });
