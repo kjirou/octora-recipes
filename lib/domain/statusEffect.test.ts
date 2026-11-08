@@ -3,6 +3,8 @@ import { describe, expect, it, test } from "vitest";
 import type {
   StatusEffectApplication,
   StatusEffectDuration,
+  StatusEffectMagnitudeCap,
+  StatusEffectMagnitudeCapApplication,
   StatusEffectPool,
   StatusEffectSource,
   StatusEffectState,
@@ -10,9 +12,12 @@ import type {
 
 import {
   applyStatusEffect,
+  applyStatusEffectMagnitudeCap,
+  createEmptyStatusEffectState,
   elapseStatusEffectTurn,
   findStatusEffectPool,
   getStatusEffectMagnitude,
+  getStatusEffectMagnitudeCap,
   getStatusEffectRemainingTurns,
   isSameStatusEffectSource,
   removePermanentStatusEffect,
@@ -43,6 +48,18 @@ const permanentSource2: StatusEffectSource = {
   abilityId: "p2",
 };
 const timedSource1: StatusEffectSource = { characterId: "t", abilityId: "t1" };
+const lueckAlbedoChiefsDaughter: StatusEffectSource = {
+  characterId: "lueck",
+  abilityId: "albedoChiefsDaughter",
+};
+const lueckBlasterMine: StatusEffectSource = {
+  characterId: "lueck",
+  abilityId: "blasterMine",
+};
+const rocbouquetTemptation: StatusEffectSource = {
+  characterId: "rocbouquet",
+  abilityId: "temptationEx",
+};
 
 /** テスト用に、省略可能な項目を埋めた付与内容を作る。 */
 const createApplication = (
@@ -53,6 +70,18 @@ const createApplication = (
   magnitude: 20,
   duration: turns(2),
   source: violaAntiAttack2,
+  ...overrides,
+});
+
+/** テスト用に、省略可能な項目を埋めた上限引き上げの付与内容を作る。 */
+const createCapApplication = (
+  overrides: Partial<StatusEffectMagnitudeCapApplication> = {},
+): StatusEffectMagnitudeCapApplication => ({
+  slot: "battleAbility",
+  kind: "physicalDefenseDown",
+  cap: 50,
+  duration: turns(3),
+  source: lueckBlasterMine,
   ...overrides,
 });
 
@@ -69,15 +98,52 @@ const createPool = (
   ...overrides,
 });
 
+/** テスト用に、省略可能な項目を埋めた上限引き上げ効果を作る。 */
+const createCap = (
+  overrides: Partial<StatusEffectMagnitudeCap> = {},
+): StatusEffectMagnitudeCap => ({
+  slot: "battleAbility",
+  kind: "physicalDefenseDown",
+  cap: 50,
+  remainingTurns: 3,
+  source: lueckBlasterMine,
+  ...overrides,
+});
+
+/** テスト用に、まとまりと上限引き上げ効果から状態を作る。 */
+const createState = (
+  pools: StatusEffectPool[] = [],
+  magnitudeCaps: StatusEffectMagnitudeCap[] = [],
+): StatusEffectState => ({ pools, magnitudeCaps });
+
 /** 付与内容を順に適用した結果を返す。 */
 const applyAll = (
   applications: StatusEffectApplication[],
-  initial: StatusEffectState = [],
+  initial: StatusEffectState = createEmptyStatusEffectState(),
 ): StatusEffectState =>
   applications.reduce(
     (state, application) => applyStatusEffect(state, application),
     initial,
   );
+
+/** 上限引き上げの付与内容を順に適用した結果を返す。 */
+const applyAllCaps = (
+  applications: StatusEffectMagnitudeCapApplication[],
+  initial: StatusEffectState = createEmptyStatusEffectState(),
+): StatusEffectState =>
+  applications.reduce(
+    (state, application) => applyStatusEffectMagnitudeCap(state, application),
+    initial,
+  );
+
+describe("createEmptyStatusEffectState", () => {
+  it("まとまりも上限引き上げ効果も無い状態を返す", () => {
+    expect(createEmptyStatusEffectState()).toStrictEqual({
+      pools: [],
+      magnitudeCaps: [],
+    });
+  });
+});
 
 describe("isSameStatusEffectSource", () => {
   test.each<{
@@ -172,11 +238,74 @@ describe("findStatusEffectPool", () => {
     },
     {
       name: "空の状態なら undefined",
-      args: [[], "battleAbility", "physicalAttackDown"],
+      args: [
+        createEmptyStatusEffectState(),
+        "battleAbility",
+        "physicalAttackDown",
+      ],
       expected: undefined,
     },
   ])("$name", ({ args, expected }) => {
     expect(findStatusEffectPool(...args)).toStrictEqual(expected);
+  });
+});
+
+describe("getStatusEffectMagnitudeCap", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof getStatusEffectMagnitudeCap>;
+    expected: ReturnType<typeof getStatusEffectMagnitudeCap>;
+  }>([
+    {
+      name: "上限引き上げ効果が無ければ 30",
+      args: [
+        createEmptyStatusEffectState(),
+        "battleAbility",
+        "physicalDefenseDown",
+      ],
+      expected: 30,
+    },
+    {
+      name: "枠・種別が一致する上限引き上げ効果の値を返す",
+      args: [
+        applyAllCaps([createCapApplication({ cap: 50 })]),
+        "battleAbility",
+        "physicalDefenseDown",
+      ],
+      expected: 50,
+    },
+    {
+      name: "枠が違う上限引き上げ効果は適用されない",
+      args: [
+        applyAllCaps([createCapApplication({ slot: "supportAbility" })]),
+        "battleAbility",
+        "physicalDefenseDown",
+      ],
+      expected: 30,
+    },
+    {
+      name: "種別が違う上限引き上げ効果は適用されない",
+      args: [
+        applyAllCaps([createCapApplication({ kind: "elementalDefenseDown" })]),
+        "battleAbility",
+        "physicalDefenseDown",
+      ],
+      expected: 30,
+    },
+    {
+      name: "複数あれば最も高い上限が有効",
+      args: [
+        applyAllCaps([
+          createCapApplication({ cap: 50, source: lueckBlasterMine }),
+          createCapApplication({ cap: 60, source: rocbouquetTemptation }),
+        ]),
+        "battleAbility",
+        "physicalDefenseDown",
+      ],
+      expected: 60,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(getStatusEffectMagnitudeCap(...args)).toBe(expected);
   });
 });
 
@@ -242,17 +371,37 @@ describe("getStatusEffectMagnitude", () => {
       expected: 30,
     },
     {
-      name: "上限を 50% にすると 30% を超えた分も反映される",
+      name: "上限引き上げ効果があれば、その上限まで反映される（物防ダウン 30% + 25% で上限 50%）",
       args: [
-        applyAll([
-          createApplication({ magnitude: 30 }),
-          createApplication({ magnitude: 25, source: sourceA }),
-        ]),
+        applyAllCaps(
+          [createCapApplication({ cap: 50 })],
+          applyAll([
+            createApplication({ kind: "physicalDefenseDown", magnitude: 30 }),
+            createApplication({
+              kind: "physicalDefenseDown",
+              magnitude: 25,
+              source: sourceA,
+            }),
+          ]),
+        ),
         "battleAbility",
-        "physicalAttackDown",
-        { magnitudeCap: 50 },
+        "physicalDefenseDown",
       ],
       expected: 50,
+    },
+    {
+      name: "上限引き上げ効果があっても、合計が上限未満ならそのまま",
+      args: [
+        applyAllCaps(
+          [createCapApplication({ cap: 50 })],
+          applyAll([
+            createApplication({ kind: "physicalDefenseDown", magnitude: 40 }),
+          ]),
+        ),
+        "battleAbility",
+        "physicalDefenseDown",
+      ],
+      expected: 40,
     },
     {
       name: "かかっていなければ 0",
@@ -311,7 +460,7 @@ describe("applyStatusEffect", () => {
     test.each<{
       name: string;
       applications: StatusEffectApplication[];
-      expected: StatusEffectState;
+      expected: StatusEffectPool[];
     }>([
       {
         name: "何もかかっていない対象に付与すると、そのまま新しいまとまりになる",
@@ -553,7 +702,7 @@ describe("applyStatusEffect", () => {
         ],
       },
     ])("$name", ({ applications, expected }) => {
-      expect(applyAll(applications)).toStrictEqual(expected);
+      expect(applyAll(applications)).toStrictEqual(createState(expected));
     });
   });
 
@@ -561,7 +710,7 @@ describe("applyStatusEffect", () => {
     test.each<{
       name: string;
       applications: StatusEffectApplication[];
-      expected: StatusEffectState;
+      expected: StatusEffectPool[];
     }>([
       {
         name: "ターン無し効果を付与すると、残りターン 0 のまとまりになる",
@@ -668,7 +817,7 @@ describe("applyStatusEffect", () => {
         ],
       },
     ])("$name", ({ applications, expected }) => {
-      expect(applyAll(applications)).toStrictEqual(expected);
+      expect(applyAll(applications)).toStrictEqual(createState(expected));
     });
   });
 
@@ -717,7 +866,128 @@ describe("applyStatusEffect", () => {
         expected: "継続ターンは 1 以上の整数である必要があります",
       },
     ])("$name", ({ application, expected }) => {
-      expect(() => applyStatusEffect([], application)).toThrow(expected);
+      expect(() =>
+        applyStatusEffect(createEmptyStatusEffectState(), application),
+      ).toThrow(expected);
+    });
+  });
+});
+
+describe("applyStatusEffectMagnitudeCap", () => {
+  test.each<{
+    name: string;
+    applications: StatusEffectMagnitudeCapApplication[];
+    expected: StatusEffectMagnitudeCap[];
+  }>([
+    {
+      name: "ターン付きの上限引き上げ効果を付与する（調合：ブラスターマイン 上限 50%・3 ターン）",
+      applications: [createCapApplication()],
+      expected: [createCap()],
+    },
+    {
+      name: "ターン無しの上限引き上げ効果を付与する（アルベド族長の娘 上限 60%）",
+      applications: [
+        createCapApplication({
+          slot: "supportAbility",
+          kind: "physicalAttackUp",
+          cap: 60,
+          duration: permanent,
+          source: lueckAlbedoChiefsDaughter,
+        }),
+      ],
+      expected: [
+        createCap({
+          slot: "supportAbility",
+          kind: "physicalAttackUp",
+          cap: 60,
+          remainingTurns: null,
+          source: lueckAlbedoChiefsDaughter,
+        }),
+      ],
+    },
+    {
+      name: "同じ付与元を重ねると残りターンが合算される",
+      applications: [createCapApplication(), createCapApplication()],
+      expected: [createCap({ remainingTurns: 6 })],
+    },
+    {
+      name: "同じ付与元の残りターンは 9 で止まる",
+      applications: Array.from({ length: 4 }, () => createCapApplication()),
+      expected: [createCap({ remainingTurns: 9 })],
+    },
+    {
+      name: "同じ付与元を違う上限値で重ねると上限値が差し替わる",
+      applications: [
+        createCapApplication({ cap: 50 }),
+        createCapApplication({ cap: 60 }),
+      ],
+      expected: [createCap({ cap: 60, remainingTurns: 6 })],
+    },
+    {
+      name: "違う付与元は別の効果として並存する",
+      applications: [
+        createCapApplication({ source: lueckBlasterMine }),
+        createCapApplication({
+          duration: turns(2),
+          source: rocbouquetTemptation,
+        }),
+      ],
+      expected: [
+        createCap({ source: lueckBlasterMine }),
+        createCap({ remainingTurns: 2, source: rocbouquetTemptation }),
+      ],
+    },
+    {
+      name: "種別が違えば同じ付与元でも別の効果になる（物防・属防ダウンの上限を 1 件ずつ付与）",
+      applications: [
+        createCapApplication({ kind: "physicalDefenseDown" }),
+        createCapApplication({ kind: "elementalDefenseDown" }),
+      ],
+      expected: [
+        createCap({ kind: "physicalDefenseDown" }),
+        createCap({ kind: "elementalDefenseDown" }),
+      ],
+    },
+  ])("$name", ({ applications, expected }) => {
+    expect(applyAllCaps(applications)).toStrictEqual(createState([], expected));
+  });
+
+  it("まとまりには影響しない", () => {
+    const before = applyAll([createApplication()]);
+    const after = applyStatusEffectMagnitudeCap(before, createCapApplication());
+    expect(after.pools).toStrictEqual(before.pools);
+  });
+
+  it("元の状態を変更しない", () => {
+    const before = applyAllCaps([createCapApplication()]);
+    const snapshot = structuredClone(before);
+    applyStatusEffectMagnitudeCap(before, createCapApplication({ cap: 60 }));
+    expect(before).toStrictEqual(snapshot);
+  });
+
+  describe("不正な入力", () => {
+    test.each<{
+      name: string;
+      application: StatusEffectMagnitudeCapApplication;
+      expected: string;
+    }>([
+      {
+        name: "上限が 0 なら例外",
+        application: createCapApplication({ cap: 0 }),
+        expected: "上限は正の数である必要があります",
+      },
+      {
+        name: "継続ターンが 0 なら例外",
+        application: createCapApplication({ duration: turns(0) }),
+        expected: "継続ターンは 1 以上の整数である必要があります",
+      },
+    ])("$name", ({ application, expected }) => {
+      expect(() =>
+        applyStatusEffectMagnitudeCap(
+          createEmptyStatusEffectState(),
+          application,
+        ),
+      ).toThrow(expected);
     });
   });
 });
@@ -745,11 +1015,11 @@ describe("removePermanentStatusEffect", () => {
         ]),
         permanentSource1,
       ],
-      expected: [
+      expected: createState([
         createPool({
           permanentSources: [{ source: permanentSource2, magnitude: 5 }],
         }),
-      ],
+      ]),
     },
     {
       name: "ターン付き効果が残っていればまとまりは残る",
@@ -764,13 +1034,13 @@ describe("removePermanentStatusEffect", () => {
         ]),
         permanentSource1,
       ],
-      expected: [
+      expected: createState([
         createPool({
           timedMagnitude: 20,
           remainingTurns: 2,
           timedSources: [timedSource1],
         }),
-      ],
+      ]),
     },
     {
       name: "何も残らないまとまりは取り除かれる",
@@ -784,7 +1054,7 @@ describe("removePermanentStatusEffect", () => {
         ]),
         permanentSource1,
       ],
-      expected: [],
+      expected: createEmptyStatusEffectState(),
     },
     {
       name: "複数の種別にまたがる同じ付与元をまとめて取り除く",
@@ -805,7 +1075,36 @@ describe("removePermanentStatusEffect", () => {
         ]),
         permanentSource1,
       ],
-      expected: [],
+      expected: createEmptyStatusEffectState(),
+    },
+    {
+      name: "ターン無しの上限引き上げ効果も取り除く（アルベド族長の娘の条件が外れた）",
+      args: [
+        applyAllCaps([
+          createCapApplication({
+            slot: "supportAbility",
+            kind: "physicalAttackUp",
+            cap: 60,
+            duration: permanent,
+            source: lueckAlbedoChiefsDaughter,
+          }),
+          createCapApplication({
+            slot: "supportAbility",
+            kind: "elementalAttackUp",
+            cap: 60,
+            duration: permanent,
+            source: lueckAlbedoChiefsDaughter,
+          }),
+          createCapApplication(),
+        ]),
+        lueckAlbedoChiefsDaughter,
+      ],
+      expected: createState([], [createCap()]),
+    },
+    {
+      name: "同じ付与元でもターン付きの上限引き上げ効果は取り除かない",
+      args: [applyAllCaps([createCapApplication()]), lueckBlasterMine],
+      expected: createState([], [createCap()]),
     },
     {
       name: "該当する付与元が無ければ変化しない",
@@ -813,13 +1112,13 @@ describe("removePermanentStatusEffect", () => {
         applyAll([createApplication({ source: timedSource1 })]),
         permanentSource1,
       ],
-      expected: [
+      expected: createState([
         createPool({
           timedMagnitude: 20,
           remainingTurns: 2,
           timedSources: [timedSource1],
         }),
-      ],
+      ]),
     },
   ])("$name", ({ args, expected }) => {
     expect(removePermanentStatusEffect(...args)).toStrictEqual(expected);
@@ -849,7 +1148,7 @@ describe("elapseStatusEffectTurn", () => {
           createApplication({ slot: "ultimate", source: sourceA }),
         ]),
       ],
-      expected: [
+      expected: createState([
         createPool({
           timedMagnitude: 20,
           remainingTurns: 2,
@@ -861,12 +1160,12 @@ describe("elapseStatusEffectTurn", () => {
           remainingTurns: 1,
           timedSources: [sourceA],
         }),
-      ],
+      ]),
     },
     {
       name: "残りターンが 1 で他に何も無いまとまりは取り除かれる",
       args: [applyAll([createApplication({ duration: turns(1) })])],
-      expected: [],
+      expected: createEmptyStatusEffectState(),
     },
     {
       name: "残りターンが 1 でターン無し効果があれば、ターン付き効果だけ消えてまとまりは残る",
@@ -880,11 +1179,11 @@ describe("elapseStatusEffectTurn", () => {
           createApplication({ duration: turns(1), source: timedSource1 }),
         ]),
       ],
-      expected: [
+      expected: createState([
         createPool({
           permanentSources: [{ source: permanentSource1, magnitude: 10 }],
         }),
-      ],
+      ]),
     },
     {
       name: "ターン無し効果だけのまとまりは変化しない",
@@ -897,23 +1196,59 @@ describe("elapseStatusEffectTurn", () => {
           }),
         ]),
       ],
-      expected: [
+      expected: createState([
         createPool({
           permanentSources: [{ source: permanentSource1, magnitude: 10 }],
         }),
+      ]),
+    },
+    {
+      name: "ターン付きの上限引き上げ効果は残りターンが 1 減り、0 になれば取り除かれる",
+      args: [
+        applyAllCaps([
+          createCapApplication({ duration: turns(3) }),
+          createCapApplication({
+            duration: turns(1),
+            source: rocbouquetTemptation,
+          }),
+        ]),
       ],
+      expected: createState([], [createCap({ remainingTurns: 2 })]),
+    },
+    {
+      name: "ターン無しの上限引き上げ効果は変化しない",
+      args: [
+        applyAllCaps([
+          createCapApplication({
+            duration: permanent,
+            source: lueckAlbedoChiefsDaughter,
+          }),
+        ]),
+      ],
+      expected: createState(
+        [],
+        [
+          createCap({
+            remainingTurns: null,
+            source: lueckAlbedoChiefsDaughter,
+          }),
+        ],
+      ),
     },
     {
       name: "空の状態は空のまま",
-      args: [[]],
-      expected: [],
+      args: [createEmptyStatusEffectState()],
+      expected: createEmptyStatusEffectState(),
     },
   ])("$name", ({ args, expected }) => {
     expect(elapseStatusEffectTurn(...args)).toStrictEqual(expected);
   });
 
   it("元の状態を変更しない", () => {
-    const before = applyAll([createApplication()]);
+    const before = applyAllCaps(
+      [createCapApplication()],
+      applyAll([createApplication()]),
+    );
     const snapshot = structuredClone(before);
     elapseStatusEffectTurn(before);
     expect(before).toStrictEqual(snapshot);
@@ -937,7 +1272,7 @@ describe("ターンをまたいだシナリオ", () => {
   it("1 ターン目に 10%（2 ターン）、2 ターン目に別技で 20%（2 ターン）を付与すると、2〜4 ターン目は 30% になる", () => {
     // 1 ターン目
     let state = applyStatusEffect(
-      [],
+      createEmptyStatusEffectState(),
       createApplication({
         kind: "physicalAttackUp",
         magnitude: 10,
@@ -1051,6 +1386,46 @@ describe("ターンをまたいだシナリオ", () => {
 
     state = removePermanentStatusEffect(state, permanentSource1);
     expect(read(state)).toBe(0);
-    expect(state).toStrictEqual([]);
+    expect(state).toStrictEqual(createEmptyStatusEffectState());
+  });
+
+  it("上限引き上げ効果が付いた瞬間に、それまで 30% を超えていた分も反映され、切れると 30% に戻る", () => {
+    const read = (state: StatusEffectState) =>
+      getStatusEffectMagnitude(state, "battleAbility", "physicalDefenseDown");
+
+    // 物防ダウン 30% + 25% を先に付与（生の値は 55%、上限 30% で止まる）
+    let state = applyAll([
+      createApplication({
+        kind: "physicalDefenseDown",
+        magnitude: 30,
+        duration: turns(5),
+      }),
+      createApplication({
+        kind: "physicalDefenseDown",
+        magnitude: 25,
+        duration: turns(5),
+        source: sourceA,
+      }),
+    ]);
+    expect(read(state)).toBe(30);
+
+    // 調合：ブラスターマイン（上限 50%、3 ターン）
+    state = applyStatusEffectMagnitudeCap(state, createCapApplication());
+    expect(read(state)).toBe(50);
+
+    state = elapseStatusEffectTurn(state);
+    state = elapseStatusEffectTurn(state);
+    expect(read(state)).toBe(50);
+
+    // 3 ターン目の終わりで上限引き上げ効果が切れる
+    state = elapseStatusEffectTurn(state);
+    expect(read(state)).toBe(30);
+    expect(
+      getStatusEffectMagnitudeCap(
+        state,
+        "battleAbility",
+        "physicalDefenseDown",
+      ),
+    ).toBe(30);
   });
 });

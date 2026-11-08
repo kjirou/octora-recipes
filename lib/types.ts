@@ -201,8 +201,42 @@ export type StatusEffectPool = {
   timedSources: StatusEffectSource[];
 };
 
+/**
+ * 効果量の上限を引き上げる効果を 1 件付与する内容。
+ *
+ * 「サポアビと装備性能による物攻・属攻アップの上限が 60% になる効果」（リュック「アルベド族長の娘」、
+ * ターン無し）や「バトルアビリティによる物防・属防ダウンを受けた際の上限が 50% になる効果」
+ * （リュック「調合：ブラスターマイン」3 ターン、七英雄ロックブーケ「テンプテーション EX」2 ターン）
+ * のように、「枠 × 種別」を指定して上限値を変える。
+ * 「物攻・属攻アップ」のように複数の種別にかかる場合は、種別ごとに 1 件ずつ付与する。
+ */
+export type StatusEffectMagnitudeCapApplication = {
+  slot: StatusEffectSlot;
+  kind: StatusEffectKind;
+  /** 引き上げ後の上限（%）。例: 50, 60。 */
+  cap: number;
+  duration: StatusEffectDuration;
+  source: StatusEffectSource;
+};
+
+/** ある対象にかかっている、効果量の上限を引き上げる効果 1 件。 */
+export type StatusEffectMagnitudeCap = {
+  slot: StatusEffectSlot;
+  kind: StatusEffectKind;
+  /** 引き上げ後の上限（%）。 */
+  cap: number;
+  /** 残りターン数。現在のターンを含む。ターン無しなら null。 */
+  remainingTurns: number | null;
+  source: StatusEffectSource;
+};
+
 /** ある対象（味方 1 人または敵 1 体）にかかっているバフ・デバフ全体。 */
-export type StatusEffectState = readonly StatusEffectPool[];
+export type StatusEffectState = {
+  /** 「枠 × 種別」ごとのバフ・デバフのまとまり。 */
+  pools: readonly StatusEffectPool[];
+  /** 効果量の上限を引き上げる効果。複数あれば最も高い上限が有効。 */
+  magnitudeCaps: readonly StatusEffectMagnitudeCap[];
+};
 
 // --- 状態異常 -------------------------------------------------------------------
 //
