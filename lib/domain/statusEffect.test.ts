@@ -18,12 +18,14 @@ import {
   findStatusEffectPool,
   getDamageCapUpMagnitude,
   getDamageUpMagnitude,
+  getResistanceMagnitude,
   getStatusEffectMagnitude,
   getStatusEffectMagnitudeCap,
   getStatusEffectRemainingTurns,
   isSameStatusEffectSource,
   listApplicableDamageCapUpKinds,
   listApplicableDamageUpKinds,
+  listApplicableResistanceKinds,
   removePermanentStatusEffect,
 } from "./statusEffect";
 
@@ -113,6 +115,26 @@ const osvaldPriceOfMagic: StatusEffectSource = {
 const rocbouquetPassionPerfume: StatusEffectSource = {
   characterId: "rocbouquet",
   abilityId: "passionPerfume",
+};
+const frenziedFoolRisingRebellion: StatusEffectSource = {
+  characterId: "frenziedFool",
+  abilityId: "risingRebellionTorch",
+};
+const frenziedFoolPlundererFury: StatusEffectSource = {
+  characterId: "frenziedFool",
+  abilityId: "plundererFury",
+};
+const frenziedFoolPlunderSpear: StatusEffectSource = {
+  characterId: "frenziedFool",
+  abilityId: "plunderSpear",
+};
+const rocbouquetEnticingInvitation: StatusEffectSource = {
+  characterId: "rocbouquet",
+  abilityId: "enticingInvitationTorch",
+};
+const linyuMermaidsSorrow: StatusEffectSource = {
+  characterId: "linyuEx",
+  abilityId: "mermaidsSorrow",
 };
 
 /** テスト用に、省略可能な項目を埋めた付与内容を作る。 */
@@ -205,6 +227,112 @@ const breathOfTheSeaApplications: StatusEffectApplication[] = (
     source: linyuBreathOfTheSea,
   }),
 );
+
+/**
+ * 狂騒の愚者「満ちる叛意 灯火」: 敵全体に槍・斧・闇耐性ダウン 15%（ターン無し）。
+ * 攻撃種別ごとに 1 つずつ付与する。
+ */
+const risingRebellionApplications: StatusEffectApplication[] = (
+  ["spearResistanceDown", "axeResistanceDown", "darkResistanceDown"] as const
+).map((kind) =>
+  createApplication({
+    slot: "supportAbility",
+    kind,
+    magnitude: 15,
+    duration: permanent,
+    source: frenziedFoolRisingRebellion,
+  }),
+);
+
+/**
+ * 狂騒の愚者「満ちる叛意 灯火」: バトアビによる / サポアビと装備性能による 槍・斧・闇耐性ダウンを
+ * 受けた際の上限が 60% になる効果（ターン無し）。3 種別 × 2 枠の 6 件。
+ */
+const risingRebellionCaps: StatusEffectMagnitudeCapApplication[] = (
+  ["battleAbility", "supportAbility"] as const
+).flatMap((slot) =>
+  (
+    ["spearResistanceDown", "axeResistanceDown", "darkResistanceDown"] as const
+  ).map((kind) =>
+    createCapApplication({
+      slot,
+      kind,
+      cap: 60,
+      duration: permanent,
+      source: frenziedFoolRisingRebellion,
+    }),
+  ),
+);
+
+/** 狂騒の愚者「略奪者の猛り」: 敵全体に槍耐性ダウン 15%（2 ターン）。 */
+const plundererFuryApplication: StatusEffectApplication = createApplication({
+  kind: "spearResistanceDown",
+  magnitude: 15,
+  duration: turns(2),
+  source: frenziedFoolPlundererFury,
+});
+
+/** 狂騒の愚者「強奪の槍」: 攻撃対象に物理耐性ダウン 15%（2 ターン）。 */
+const plunderSpearApplication: StatusEffectApplication = createApplication({
+  kind: "physicalResistanceDown",
+  magnitude: 15,
+  duration: turns(2),
+  source: frenziedFoolPlunderSpear,
+});
+
+/** 七英雄ロックブーケ「魅惑の誘い 灯火」: 敵全体に属性耐性ダウン 20%（ターン無し）。 */
+const enticingInvitationApplication: StatusEffectApplication =
+  createApplication({
+    slot: "supportAbility",
+    kind: "elementalResistanceDown",
+    magnitude: 20,
+    duration: permanent,
+    source: rocbouquetEnticingInvitation,
+  });
+
+/**
+ * 七英雄ロックブーケ「魅惑の誘い 灯火」: サポアビと装備性能による属性耐性ダウンを受けた際の
+ * 上限が 50% になる効果（ターン無し）。属性 6 種の種別に 1 件ずつ。
+ */
+const enticingInvitationCaps: StatusEffectMagnitudeCapApplication[] = (
+  [
+    "darkResistanceDown",
+    "fireResistanceDown",
+    "iceResistanceDown",
+    "lightResistanceDown",
+    "lightningResistanceDown",
+    "windResistanceDown",
+  ] as const
+).map((kind) =>
+  createCapApplication({
+    slot: "supportAbility",
+    kind,
+    cap: 50,
+    duration: permanent,
+    source: rocbouquetEnticingInvitation,
+  }),
+);
+
+/** 踊子 リンユウEX「人魚の悲情」: 敵全体に氷・風・光耐性ダウン 30%（3 ターン）。 */
+const mermaidsSorrowApplications: StatusEffectApplication[] = (
+  ["iceResistanceDown", "windResistanceDown", "lightResistanceDown"] as const
+).map((kind) =>
+  createApplication({
+    slot: "supportAbility",
+    kind,
+    magnitude: 30,
+    duration: turns(3),
+    source: linyuMermaidsSorrow,
+  }),
+);
+
+/** リュック「調合：バオール」: 味方単体に属性耐性アップ 30%（2 ターン）。 */
+const baorResistanceApplication: StatusEffectApplication = createApplication({
+  kind: "elementalResistanceUp",
+  magnitude: 30,
+  duration: turns(2),
+  source: lueckBaor,
+});
 
 describe("createEmptyStatusEffectState", () => {
   it("まとまりも上限引き上げ効果も無い状態を返す", () => {
@@ -1218,6 +1346,260 @@ describe("getDamageCapUpMagnitude", () => {
   });
 });
 
+describe("listApplicableResistanceKinds", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof listApplicableResistanceKinds>;
+    expected: ReturnType<typeof listApplicableResistanceKinds>;
+  }>([
+    {
+      name: "槍攻撃の耐性ダウンには、全物理・槍が掛かる",
+      args: ["spear", "debuff"],
+      expected: ["physicalResistanceDown", "spearResistanceDown"],
+    },
+    {
+      name: "氷攻撃の耐性アップには、全属性・氷が掛かる",
+      args: ["ice", "buff"],
+      expected: ["elementalResistanceUp", "iceResistanceUp"],
+    },
+    {
+      name: "無属性攻撃にはどの耐性も掛からない",
+      args: ["nonElemental", "debuff"],
+      expected: [],
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(listApplicableResistanceKinds(...args)).toStrictEqual(expected);
+  });
+});
+
+describe("getResistanceMagnitude", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof getResistanceMagnitude>;
+    expected: ReturnType<typeof getResistanceMagnitude>;
+  }>([
+    {
+      name: "満ちる叛意の槍耐性ダウン 15% は槍攻撃に掛かる",
+      args: [
+        applyAll(risingRebellionApplications),
+        "supportAbility",
+        "spear",
+        "debuff",
+      ],
+      expected: 15,
+    },
+    {
+      name: "満ちる叛意の槍・斧・闇耐性ダウンは剣攻撃には掛からない",
+      args: [
+        applyAll(risingRebellionApplications),
+        "supportAbility",
+        "sword",
+        "debuff",
+      ],
+      expected: 0,
+    },
+    {
+      name: "サポアビ枠の耐性ダウンはバトアビ枠には数えない",
+      args: [
+        applyAll(risingRebellionApplications),
+        "battleAbility",
+        "spear",
+        "debuff",
+      ],
+      expected: 0,
+    },
+    {
+      name: "略奪者の猛りの槍 15% と強奪の槍の物理 15% は、槍攻撃に対して合算される",
+      args: [
+        applyAll([plundererFuryApplication, plunderSpearApplication]),
+        "battleAbility",
+        "spear",
+        "debuff",
+      ],
+      expected: 30,
+    },
+    {
+      name: "強奪の槍の物理耐性ダウンは剣攻撃にも掛かるが、略奪者の猛りの槍耐性ダウンは掛からない",
+      args: [
+        applyAll([plundererFuryApplication, plunderSpearApplication]),
+        "battleAbility",
+        "sword",
+        "debuff",
+      ],
+      expected: 15,
+    },
+    {
+      name: "物理耐性ダウンは属性攻撃には掛からない",
+      args: [
+        applyAll([plunderSpearApplication]),
+        "battleAbility",
+        "fire",
+        "debuff",
+      ],
+      expected: 0,
+    },
+    {
+      name: "槍と物理の合算が 30% を超えると、槍攻撃に対して 30% で止まる",
+      args: [
+        applyAll([
+          plundererFuryApplication,
+          plunderSpearApplication,
+          { ...plundererFuryApplication, source: sourceB },
+        ]),
+        "battleAbility",
+        "spear",
+        "debuff",
+      ],
+      expected: 30,
+    },
+    {
+      name: "満ちる叛意の上限 60% があれば、バトアビ枠の槍攻撃に対する合算 45% がそのまま反映される",
+      args: [
+        applyAllCaps(
+          risingRebellionCaps,
+          applyAll([
+            plundererFuryApplication,
+            plunderSpearApplication,
+            { ...plundererFuryApplication, source: sourceB },
+          ]),
+        ),
+        "battleAbility",
+        "spear",
+        "debuff",
+      ],
+      expected: 45,
+    },
+    {
+      name: "満ちる叛意の上限 60% は槍・斧・闇だけに掛かり、剣攻撃に対しては 30% で止まる",
+      args: [
+        applyAllCaps(
+          risingRebellionCaps,
+          applyAll([
+            plunderSpearApplication,
+            { ...plunderSpearApplication, source: sourceB },
+            createApplication({
+              kind: "swordResistanceDown",
+              magnitude: 15,
+              source: sourceA,
+            }),
+          ]),
+        ),
+        "battleAbility",
+        "sword",
+        "debuff",
+      ],
+      expected: 30,
+    },
+    {
+      name: "魅惑の誘いの属性耐性ダウン 20% は火攻撃に掛かる",
+      args: [
+        applyAll([enticingInvitationApplication]),
+        "supportAbility",
+        "fire",
+        "debuff",
+      ],
+      expected: 20,
+    },
+    {
+      name: "魅惑の誘いの属性耐性ダウンは物理攻撃には掛からない",
+      args: [
+        applyAll([enticingInvitationApplication]),
+        "supportAbility",
+        "sword",
+        "debuff",
+      ],
+      expected: 0,
+    },
+    {
+      name: "属性耐性ダウンは無属性攻撃には掛からない",
+      args: [
+        applyAll([enticingInvitationApplication]),
+        "supportAbility",
+        "nonElemental",
+        "debuff",
+      ],
+      expected: 0,
+    },
+    {
+      name: "上限引き上げが無ければ、人魚の悲情の氷 30% と魅惑の誘いの属性 20% は氷攻撃に対して 30% で止まる",
+      args: [
+        applyAll([
+          ...mermaidsSorrowApplications,
+          enticingInvitationApplication,
+        ]),
+        "supportAbility",
+        "ice",
+        "debuff",
+      ],
+      expected: 30,
+    },
+    {
+      name: "魅惑の誘いの上限 50% があれば、人魚の悲情の氷 30% と魅惑の誘いの属性 20% は氷攻撃に対して 50% になる",
+      args: [
+        applyAllCaps(
+          enticingInvitationCaps,
+          applyAll([
+            ...mermaidsSorrowApplications,
+            enticingInvitationApplication,
+          ]),
+        ),
+        "supportAbility",
+        "ice",
+        "debuff",
+      ],
+      expected: 50,
+    },
+    {
+      name: "調合：バオールの属性耐性アップ 30% は氷攻撃に掛かる",
+      args: [
+        applyAll([baorResistanceApplication]),
+        "battleAbility",
+        "ice",
+        "buff",
+      ],
+      expected: 30,
+    },
+    {
+      name: "耐性アップは耐性ダウンとして数えない",
+      args: [
+        applyAll([baorResistanceApplication]),
+        "battleAbility",
+        "ice",
+        "debuff",
+      ],
+      expected: 0,
+    },
+    {
+      name: "耐性ダウンは耐性アップとして数えない",
+      args: [
+        applyAll([enticingInvitationApplication]),
+        "supportAbility",
+        "ice",
+        "buff",
+      ],
+      expected: 0,
+    },
+    {
+      name: "ダメージアップ系の種別は耐性に含まれない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "spearDamageUp",
+            magnitude: 15,
+            source: sourceA,
+          }),
+        ]),
+        "battleAbility",
+        "spear",
+        "buff",
+      ],
+      expected: 0,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(getResistanceMagnitude(...args)).toBe(expected);
+  });
+});
+
 describe("getStatusEffectRemainingTurns", () => {
   test.each<{
     name: string;
@@ -1814,6 +2196,27 @@ describe("applyStatusEffectMagnitudeCap", () => {
         createCap({ kind: "elementalDefenseDown" }),
       ],
     },
+    {
+      name: "満ちる叛意の上限 60% は、槍・斧・闇 × バトアビ・サポアビの 6 件として付与される",
+      applications: risingRebellionCaps,
+      expected: (["battleAbility", "supportAbility"] as const).flatMap((slot) =>
+        (
+          [
+            "spearResistanceDown",
+            "axeResistanceDown",
+            "darkResistanceDown",
+          ] as const
+        ).map((kind) =>
+          createCap({
+            slot,
+            kind,
+            cap: 60,
+            remainingTurns: null,
+            source: frenziedFoolRisingRebellion,
+          }),
+        ),
+      ),
+    },
   ])("$name", ({ applications, expected }) => {
     expect(applyAllCaps(applications)).toStrictEqual(createState([], expected));
   });
@@ -1858,6 +2261,18 @@ describe("applyStatusEffectMagnitudeCap", () => {
         application: createCapApplication({ kind: "weaknessDamageUp" }),
         expected:
           "ダメージアップ系の上限引き上げは武器種別・属性別の種別にのみ指定できます: kind=weaknessDamageUp",
+      },
+      {
+        name: "物理耐性ダウン（全物理）を指定すると例外",
+        application: createCapApplication({ kind: "physicalResistanceDown" }),
+        expected:
+          "耐性系の上限引き上げは武器種別・属性別の種別にのみ指定できます: kind=physicalResistanceDown",
+      },
+      {
+        name: "属性耐性アップ（全属性）を指定すると例外",
+        application: createCapApplication({ kind: "elementalResistanceUp" }),
+        expected:
+          "耐性系の上限引き上げは武器種別・属性別の種別にのみ指定できます: kind=elementalResistanceUp",
       },
       {
         name: "上限の無いダメージ上限アップを指定すると例外",
@@ -2398,5 +2813,43 @@ describe("ダメージ上限アップのターンをまたいだシナリオ", (
 
     // 5 ターン目
     expect(readSword(state)).toBe(0);
+  });
+});
+
+describe("耐性ダウンのターンをまたいだシナリオ", () => {
+  it("略奪者の猛り（槍・2 ターン）の 2 ターン目に強奪の槍（物理・2 ターン）を重ねると、種別ごとにターンが管理され、槍攻撃に対して 1 ターン目 15%、2 ターン目 30%、3 ターン目 15%、4 ターン目 0% になる", () => {
+    const readSpear = (current: StatusEffectState): number =>
+      getResistanceMagnitude(current, "battleAbility", "spear", "debuff");
+
+    // 1 ターン目
+    let state = applyAll([plundererFuryApplication]);
+    expect(readSpear(state)).toBe(15);
+    state = elapseStatusEffectTurn(state);
+
+    // 2 ターン目: 物理耐性ダウンは槍耐性ダウンとは別のまとまりなので、ターンは合算されない
+    state = applyAll([plunderSpearApplication], state);
+    expect(readSpear(state)).toBe(30);
+    expect(
+      getStatusEffectRemainingTurns(
+        state,
+        "battleAbility",
+        "spearResistanceDown",
+      ),
+    ).toBe(1);
+    expect(
+      getStatusEffectRemainingTurns(
+        state,
+        "battleAbility",
+        "physicalResistanceDown",
+      ),
+    ).toBe(2);
+    state = elapseStatusEffectTurn(state);
+
+    // 3 ターン目: 槍耐性ダウンが切れ、物理耐性ダウンだけが残る
+    expect(readSpear(state)).toBe(15);
+    state = elapseStatusEffectTurn(state);
+
+    // 4 ターン目
+    expect(readSpear(state)).toBe(0);
   });
 });
