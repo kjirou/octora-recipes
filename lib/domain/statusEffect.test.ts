@@ -90,8 +90,9 @@ const rocbouquetSingleMindedLove: StatusEffectSource = {
   characterId: "rocbouquet",
   abilityId: "singleMindedLove",
 };
-const sincerityPouch: StatusEffectSource = {
-  characterId: "x",
+/** 覚醒アクセサリー「真心のポーチ」。装備者（自身）にだけ掛かるので、装備者の ID で表す。 */
+const finalEmpressSincerityPouch: StatusEffectSource = {
+  characterId: "finalEmpressFemale",
   abilityId: "sincerityPouch",
 };
 
@@ -799,7 +800,7 @@ describe("getDamageUpMagnitude", () => {
             kind: "weaknessDamageUp",
             magnitude: 10,
             duration: permanent,
-            source: sincerityPouch,
+            source: finalEmpressSincerityPouch,
           }),
           createApplication({
             slot: "supportAbility",
