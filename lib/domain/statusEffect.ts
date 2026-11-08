@@ -6,8 +6,9 @@
  *
  * 採用しているルール:
  *
- * - 効果量（%）は「枠 × 種別」のまとまり（{@link StatusEffectPool}）ごとに合算し、
- *   参照時に上限（基本 30%）を適用する。枠が違えば別々に 30% まで積める。
+ * - 効果量は「枠 × 種別」のまとまり（{@link StatusEffectPool}）ごとに合算し、
+ *   参照時に上限を適用する。効果量の単位（% / 絶対値）と上限引き上げ効果が無いときの上限は
+ *   種別ごとにマスターデータで決まり、パラメーター系とダメージアップ系は 30%。枠が違えば別々に 30% まで積める。
  *   種別はアップ / ダウンを展開した列挙なので、物攻アップと物攻ダウンは別のまとまりになる
  *   （相殺はしない）。
  * - 上限は「枠 × 種別」を指定して引き上げる効果（{@link StatusEffectMagnitudeCap}）で変わる。
@@ -44,17 +45,30 @@
  * そのためダメージアップ系の効果量は {@link getStatusEffectMagnitude} ではなく
  * {@link getDamageUpMagnitude} で参照する。
  *
+ * ダメージ上限アップ系の種別（{@link DamageCapUpStatusEffectKind}）も、付与・継続ターン・重複のルールは
+ * 上記と同じで、「枠 × 種別」のまとまりで管理する。パラメーター系との違いは次のとおり:
+ *
+ * - 効果量は % ではなく絶対値（例: 100000）。1 ヒットのダメージ上限（基本 99,999）への加算量を表す。
+ * - 合算に上限は無い。上限引き上げ効果も指定できない。
+ * - ある攻撃に対して、同じ枠の次の種別のまとまりを合算する（ダメージアップ系と同じ構造で、
+ *   上限は掛けない）。全攻撃、全物理（物理攻撃のとき）または全属性（属性攻撃のとき）、
+ *   その攻撃の武器種 / 属性のダメージ上限アップ。無属性攻撃には全攻撃のものだけが掛かる。
+ *
+ * そのためダメージ上限アップ系の効果量は {@link getDamageCapUpMagnitude} で参照する。
+ * 枠をまたいだ合算と、基本上限 99,999 への加算による最終的なダメージ上限の算出は範囲外。
+ *
  * 枠ごとの効果量を最終的なダメージ倍率に合成する計算は、このモジュールの範囲外。
  */
 
 import type {
   AttackType,
   DamageAttackType,
+  DamageCapUpStatusEffectKind,
   DamageUpCondition,
-  DamageUpKindDefinition,
   DamageUpStatusEffectKind,
   ParameterStatusEffectKind,
   StatusEffectApplication,
+  StatusEffectAttackTarget,
   StatusEffectKind,
   StatusEffectMagnitudeCap,
   StatusEffectMagnitudeCapApplication,
@@ -67,13 +81,13 @@ import type {
 
 import {
   DAMAGE_UP_KIND_DEFINITIONS,
+  DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
   getAttackTypeDamageUpKind,
+  getStatusEffectKindDefinition,
   isDamageUpStatusEffectKind,
+  listDamageCapUpKindDefinitions,
   listDamageUpKindDefinitions,
 } from "./statusEffectKind";
-
-/** 上限引き上げ効果が無いときの、1 つのまとまりの効果量（%）の上限。 */
-export const DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP = 30;
 
 /** 1 つのまとまりの継続ターン数の上限。 */
 export const MAX_STATUS_EFFECT_TURNS = 9;
@@ -102,27 +116,36 @@ export const findStatusEffectPool = (
   state.pools.find((pool) => pool.slot === slot && pool.kind === kind);
 
 /**
- * 指定した「枠 × 種別」に現在有効な効果量の上限（%）を返す。
+ * 指定した「枠 × 種別」に現在有効な効果量の上限を返す。上限の無い種別なら null。
  *
- * 上限引き上げ効果が無ければ {@link DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP}。
- * 複数あれば最も高い値。
+ * 上限引き上げ効果が無ければ、種別の既定の上限
+ * （{@link StatusEffectKindDefinition.defaultMagnitudeCap}）。複数あれば最も高い値。
  */
 export const getStatusEffectMagnitudeCap = (
   state: StatusEffectState,
   slot: StatusEffectSlot,
   kind: StatusEffectKind,
-): number =>
-  state.magnitudeCaps
+): number | null => {
+  const { defaultMagnitudeCap } = getStatusEffectKindDefinition(kind);
+  if (defaultMagnitudeCap === null) {
+    return null;
+  }
+  return state.magnitudeCaps
     .filter(
       (magnitudeCap) =>
         magnitudeCap.slot === slot && magnitudeCap.kind === kind,
     )
     .reduce(
       (cap, magnitudeCap) => Math.max(cap, magnitudeCap.cap),
-      DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP,
+      defaultMagnitudeCap,
     );
+};
 
-/** まとまりの、上限を適用する前の効果量（%）を返す。ターン無し・ターン付きの合計。 */
+/** 効果量に上限を適用した値を返す。上限が null なら効果量をそのまま返す。 */
+const capMagnitude = (magnitude: number, cap: number | null): number =>
+  cap === null ? magnitude : Math.min(magnitude, cap);
+
+/** まとまりの、上限を適用する前の効果量を返す。ターン無し・ターン付きの合計。 */
 const getRawPoolMagnitude = (pool: StatusEffectPool): number =>
   pool.permanentSources.reduce(
     (sum, permanentSource) => sum + permanentSource.magnitude,
@@ -144,7 +167,7 @@ export const getStatusEffectMagnitude = (
   if (pool === undefined) {
     return 0;
   }
-  return Math.min(
+  return capMagnitude(
     getRawPoolMagnitude(pool),
     getStatusEffectMagnitudeCap(state, slot, kind),
   );
@@ -164,9 +187,12 @@ const WEAPONS: Record<Weapon, true> = {
 const isWeapon = (attackType: AttackType): attackType is Weapon =>
   Object.hasOwn(WEAPONS, attackType);
 
-/** ダメージアップ系の種別が、指定した攻撃種別の攻撃に掛かるかを返す。発動条件は見ない。 */
+/**
+ * ダメージアップ系・ダメージ上限アップ系の種別の対象が、指定した攻撃種別の攻撃を含むかを返す。
+ * ダメージアップ系の発動条件は見ない。
+ */
 const coversDamageAttackType = (
-  { target }: DamageUpKindDefinition,
+  target: StatusEffectAttackTarget,
   attackType: DamageAttackType,
 ): boolean => {
   switch (target.type) {
@@ -194,7 +220,7 @@ export const listApplicableDamageUpKinds = (
   listDamageUpKindDefinitions()
     .filter(
       (definition) =>
-        coversDamageAttackType(definition, attackType) &&
+        coversDamageAttackType(definition.target, attackType) &&
         (definition.condition === null ||
           conditions.includes(definition.condition)),
     )
@@ -216,12 +242,11 @@ export const getDamageUpMagnitude = (
   attackType: DamageAttackType,
   conditions: readonly DamageUpCondition[],
 ): number => {
-  const rawMagnitude = listApplicableDamageUpKinds(attackType, conditions)
-    .map((kind) => findStatusEffectPool(state, slot, kind))
-    .reduce(
-      (sum, pool) => sum + (pool === undefined ? 0 : getRawPoolMagnitude(pool)),
-      0,
-    );
+  const rawMagnitude = sumRawPoolMagnitudes(
+    state,
+    slot,
+    listApplicableDamageUpKinds(attackType, conditions),
+  );
   const cap =
     attackType === "nonElemental"
       ? DEFAULT_STATUS_EFFECT_MAGNITUDE_CAP
@@ -230,8 +255,51 @@ export const getDamageUpMagnitude = (
           slot,
           getAttackTypeDamageUpKind(attackType),
         );
-  return Math.min(rawMagnitude, cap);
+  return capMagnitude(rawMagnitude, cap);
 };
+
+/** 指定した種別のまとまりの効果量（上限を適用する前）を合算する。 */
+const sumRawPoolMagnitudes = (
+  state: StatusEffectState,
+  slot: StatusEffectSlot,
+  kinds: readonly StatusEffectKind[],
+): number =>
+  kinds
+    .map((kind) => findStatusEffectPool(state, slot, kind))
+    .reduce(
+      (sum, pool) => sum + (pool === undefined ? 0 : getRawPoolMagnitude(pool)),
+      0,
+    );
+
+/**
+ * ある攻撃に掛かるダメージ上限アップ系の種別を返す。
+ *
+ * @param attackType ダメージ計算に使う攻撃種別
+ */
+export const listApplicableDamageCapUpKinds = (
+  attackType: DamageAttackType,
+): DamageCapUpStatusEffectKind[] =>
+  listDamageCapUpKindDefinitions()
+    .filter((definition) =>
+      coversDamageAttackType(definition.target, attackType),
+    )
+    .map((definition) => definition.kind);
+
+/**
+ * 指定した枠について、ある攻撃に掛かるダメージ上限アップの効果量（絶対値）を返す。
+ * かかっていなければ 0。
+ *
+ * その攻撃に掛かる種別（{@link listApplicableDamageCapUpKinds}）のまとまりの効果量を合算した値を返す。
+ * 上限は掛けない。
+ *
+ * @param attackType ダメージ計算に使う攻撃種別。弱点を突いた攻撃種別とは異なってもよい
+ */
+export const getDamageCapUpMagnitude = (
+  state: StatusEffectState,
+  slot: StatusEffectSlot,
+  attackType: DamageAttackType,
+): number =>
+  sumRawPoolMagnitudes(state, slot, listApplicableDamageCapUpKinds(attackType));
 
 /** 指定した「枠 × 種別」のターン付き効果の残りターン数を返す。無ければ 0。 */
 export const getStatusEffectRemainingTurns = (
@@ -345,8 +413,9 @@ export const applyStatusEffect = (
  *
  * 同じ「枠 × 種別 × 付与元」の効果が既にあれば、上限値を差し替え、ターン付きなら残りターンを
  * 合算する（上限 9）。付与元が違えば別の効果として並存し、参照時に最も高い上限が使われる。
- * 上限が正の数でない、継続ターンが不正な場合、またはダメージアップ系のうち武器種別・属性別
- * 以外の種別（全物理・全属性・全攻撃・条件付き）を指定した場合は例外を投げる。
+ * 上限が正の数でない、継続ターンが不正な場合、ダメージアップ系のうち武器種別・属性別
+ * 以外の種別（全物理・全属性・全攻撃・条件付き）を指定した場合、または上限の無い種別
+ * （ダメージ上限アップ系）を指定した場合は例外を投げる。
  */
 export const applyStatusEffectMagnitudeCap = (
   state: StatusEffectState,
@@ -354,6 +423,11 @@ export const applyStatusEffectMagnitudeCap = (
 ): StatusEffectState => {
   const { slot, kind, cap, duration, source } = application;
   assertValidMagnitude(cap, "上限");
+  if (getStatusEffectKindDefinition(kind).defaultMagnitudeCap === null) {
+    throw new Error(
+      `上限の無い種別には上限引き上げ効果を指定できません: kind=${kind}`,
+    );
+  }
   if (
     isDamageUpStatusEffectKind(kind) &&
     DAMAGE_UP_KIND_DEFINITIONS[kind].target.type !== "attackType"

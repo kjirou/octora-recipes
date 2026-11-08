@@ -16,11 +16,13 @@ import {
   createEmptyStatusEffectState,
   elapseStatusEffectTurn,
   findStatusEffectPool,
+  getDamageCapUpMagnitude,
   getDamageUpMagnitude,
   getStatusEffectMagnitude,
   getStatusEffectMagnitudeCap,
   getStatusEffectRemainingTurns,
   isSameStatusEffectSource,
+  listApplicableDamageCapUpKinds,
   listApplicableDamageUpKinds,
   removePermanentStatusEffect,
 } from "./statusEffect";
@@ -94,6 +96,23 @@ const rocbouquetSingleMindedLove: StatusEffectSource = {
 const finalEmpressSincerityPouch: StatusEffectSource = {
   characterId: "finalEmpressFemale",
   abilityId: "sincerityPouch",
+};
+
+const lueckBaor: StatusEffectSource = {
+  characterId: "lueck",
+  abilityId: "baor",
+};
+const linyuBreathOfTheSea: StatusEffectSource = {
+  characterId: "linyuEx",
+  abilityId: "breathOfTheSea",
+};
+const osvaldPriceOfMagic: StatusEffectSource = {
+  characterId: "osvaldEx",
+  abilityId: "priceOfMagic",
+};
+const rocbouquetPassionPerfume: StatusEffectSource = {
+  characterId: "rocbouquet",
+  abilityId: "passionPerfume",
 };
 
 /** テスト用に、省略可能な項目を埋めた付与内容を作る。 */
@@ -170,6 +189,22 @@ const applyAllCaps = (
     (state, application) => applyStatusEffectMagnitudeCap(state, application),
     initial,
   );
+
+/**
+ * 踊子 リンユウEX「大海の息吹」（200% 発動時）: 味方前後衛全体に「氷・風・光属性」のいずれかで攻撃時
+ * ダメージ上限アップ（効果量 100000）（6 ターン）。攻撃種別ごとに 1 つずつ付与する。
+ */
+const breathOfTheSeaApplications: StatusEffectApplication[] = (
+  ["iceDamageCapUp", "windDamageCapUp", "lightDamageCapUp"] as const
+).map((kind) =>
+  createApplication({
+    slot: "ultimate",
+    kind,
+    magnitude: 100000,
+    duration: turns(6),
+    source: linyuBreathOfTheSea,
+  }),
+);
 
 describe("createEmptyStatusEffectState", () => {
   it("まとまりも上限引き上げ効果も無い状態を返す", () => {
@@ -338,6 +373,11 @@ describe("getStatusEffectMagnitudeCap", () => {
         "physicalDefenseDown",
       ],
       expected: 60,
+    },
+    {
+      name: "上限の無い種別（ダメージ上限アップ）なら null",
+      args: [createEmptyStatusEffectState(), "battleAbility", "damageCapUp"],
+      expected: null,
     },
   ])("$name", ({ args, expected }) => {
     expect(getStatusEffectMagnitudeCap(...args)).toBe(expected);
@@ -947,6 +987,237 @@ describe("getDamageUpMagnitude", () => {
   });
 });
 
+describe("listApplicableDamageCapUpKinds", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof listApplicableDamageCapUpKinds>;
+    expected: ReturnType<typeof listApplicableDamageCapUpKinds>;
+  }>([
+    {
+      name: "剣攻撃には、全攻撃・全物理・剣が掛かる",
+      args: ["sword"],
+      expected: ["damageCapUp", "physicalDamageCapUp", "swordDamageCapUp"],
+    },
+    {
+      name: "氷攻撃には、全攻撃・全属性・氷が掛かる",
+      args: ["ice"],
+      expected: ["damageCapUp", "elementalDamageCapUp", "iceDamageCapUp"],
+    },
+    {
+      name: "無属性攻撃には、全攻撃だけが掛かる",
+      args: ["nonElemental"],
+      expected: ["damageCapUp"],
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(listApplicableDamageCapUpKinds(...args)).toStrictEqual(expected);
+  });
+});
+
+describe("getDamageCapUpMagnitude", () => {
+  /** リュック「バオール」: ダメージ上限アップ（効果量 100000）（2 ターン） */
+  const baor = createApplication({
+    kind: "damageCapUp",
+    magnitude: 100000,
+    duration: turns(2),
+    source: lueckBaor,
+  });
+  /** 七英雄ロックブーケ「パッションパフューム」: ダメージ上限アップ（効果量 100000）（3 ターン） */
+  const passionPerfume = createApplication({
+    slot: "ultimate",
+    kind: "damageCapUp",
+    magnitude: 100000,
+    duration: turns(3),
+    source: rocbouquetPassionPerfume,
+  });
+
+  test.each<{
+    name: string;
+    args: Parameters<typeof getDamageCapUpMagnitude>;
+    expected: ReturnType<typeof getDamageCapUpMagnitude>;
+  }>([
+    {
+      name: "バオールのダメージ上限アップ 100000 は剣攻撃に掛かる",
+      args: [applyAll([baor]), "battleAbility", "sword"],
+      expected: 100000,
+    },
+    {
+      name: "全攻撃のダメージ上限アップは無属性攻撃にも掛かる",
+      args: [applyAll([baor]), "battleAbility", "nonElemental"],
+      expected: 100000,
+    },
+    {
+      name: "違う付与元の 50000 と 100000 は上限なく合算して 150000 になる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 50000,
+            duration: turns(2),
+            source: sourceA,
+          }),
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 100000,
+            duration: turns(3),
+            source: sourceB,
+          }),
+        ]),
+        "battleAbility",
+        "sword",
+      ],
+      expected: 150000,
+    },
+    {
+      name: "代償の魔術 30000 とバオール 100000 は合算して 130000 になる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 30000,
+            duration: turns(2),
+            source: osvaldPriceOfMagic,
+          }),
+          baor,
+        ]),
+        "battleAbility",
+        "fire",
+      ],
+      expected: 130000,
+    },
+    {
+      name: "大海の息吹の氷属性ダメージ上限アップは氷攻撃に掛かる",
+      args: [applyAll(breathOfTheSeaApplications), "ultimate", "ice"],
+      expected: 100000,
+    },
+    {
+      name: "大海の息吹は火攻撃には掛からない",
+      args: [applyAll(breathOfTheSeaApplications), "ultimate", "fire"],
+      expected: 0,
+    },
+    {
+      name: "大海の息吹は無属性攻撃には掛からない",
+      args: [applyAll(breathOfTheSeaApplications), "ultimate", "nonElemental"],
+      expected: 0,
+    },
+    {
+      name: "同じ枠の全攻撃（パッションパフューム）と光属性（大海の息吹）は光攻撃に合算して掛かる",
+      args: [
+        applyAll([...breathOfTheSeaApplications, passionPerfume]),
+        "ultimate",
+        "light",
+      ],
+      expected: 200000,
+    },
+    {
+      name: "全物理のダメージ上限アップは剣攻撃に掛かる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "physicalDamageCapUp",
+            magnitude: 50000,
+            source: sourceA,
+          }),
+        ]),
+        "battleAbility",
+        "sword",
+      ],
+      expected: 50000,
+    },
+    {
+      name: "全物理のダメージ上限アップは属性攻撃には掛からない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "physicalDamageCapUp",
+            magnitude: 50000,
+            source: sourceA,
+          }),
+        ]),
+        "battleAbility",
+        "fire",
+      ],
+      expected: 0,
+    },
+    {
+      name: "全属性のダメージ上限アップは無属性攻撃には掛からない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "elementalDamageCapUp",
+            magnitude: 50000,
+            source: sourceA,
+          }),
+        ]),
+        "battleAbility",
+        "nonElemental",
+      ],
+      expected: 0,
+    },
+    {
+      name: "枠が違う効果は合算しない（バトアビのバオールと必殺技のパッションパフューム）",
+      args: [applyAll([baor, passionPerfume]), "battleAbility", "sword"],
+      expected: 100000,
+    },
+    {
+      name: "ターン無しの一途な想いとアルベド族長の娘は合算して 200000 になる",
+      args: [
+        applyAll([
+          createApplication({
+            slot: "supportAbility",
+            kind: "damageCapUp",
+            magnitude: 100000,
+            duration: permanent,
+            source: rocbouquetSingleMindedLove,
+          }),
+          createApplication({
+            slot: "supportAbility",
+            kind: "damageCapUp",
+            magnitude: 100000,
+            duration: permanent,
+            source: lueckAlbedoChiefsDaughter,
+          }),
+        ]),
+        "supportAbility",
+        "sword",
+      ],
+      expected: 200000,
+    },
+    {
+      name: "赤心のオーラの効果量 2 倍は、呼び出し側が確定した 200000 を渡す",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 200000,
+            duration: turns(2),
+            source: crimsonCondemnerAura,
+          }),
+        ]),
+        "battleAbility",
+        "staff",
+      ],
+      expected: 200000,
+    },
+    {
+      name: "ダメージアップ系の種別はダメージ上限アップに含まれない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "damageUp",
+            magnitude: 15,
+            source: molussoLiven,
+          }),
+        ]),
+        "battleAbility",
+        "sword",
+      ],
+      expected: 0,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(getDamageCapUpMagnitude(...args)).toBe(expected);
+  });
+});
+
 describe("getStatusEffectRemainingTurns", () => {
   test.each<{
     name: string;
@@ -1230,6 +1501,71 @@ describe("applyStatusEffect", () => {
             timedSources: [sourceB],
           }),
         ],
+      },
+      {
+        name: "ダメージ上限アップは上限なく合算される（50000・2 ターン + 100000・3 ターン → 150000・5 ターン）",
+        applications: [
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 50000,
+            duration: turns(2),
+            source: sourceA,
+          }),
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 100000,
+            duration: turns(3),
+            source: sourceB,
+          }),
+        ],
+        expected: [
+          createPool({
+            kind: "damageCapUp",
+            timedMagnitude: 150000,
+            remainingTurns: 5,
+            timedSources: [sourceA, sourceB],
+          }),
+        ],
+      },
+      {
+        name: "ダメージ上限アップも同じ付与元を重ねると効果量は増えない（バオール ×2）",
+        applications: [
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 100000,
+            duration: turns(2),
+            source: lueckBaor,
+          }),
+          createApplication({
+            kind: "damageCapUp",
+            magnitude: 100000,
+            duration: turns(2),
+            source: lueckBaor,
+          }),
+        ],
+        expected: [
+          createPool({
+            kind: "damageCapUp",
+            timedMagnitude: 100000,
+            remainingTurns: 4,
+            timedSources: [lueckBaor],
+          }),
+        ],
+      },
+      {
+        name: "大海の息吹は氷・風・光の 3 つのまとまりになる",
+        applications: breathOfTheSeaApplications,
+        expected: (
+          ["iceDamageCapUp", "windDamageCapUp", "lightDamageCapUp"] as const
+        ).map((kind) =>
+          createPool({
+            slot: "ultimate",
+            kind,
+            timedMagnitude: 100000,
+            remainingTurns: 6,
+            timedSources: [linyuBreathOfTheSea],
+          }),
+        ),
       },
     ])("$name", ({ applications, expected }) => {
       expect(applyAll(applications)).toStrictEqual(createState(expected));
@@ -1522,6 +1858,18 @@ describe("applyStatusEffectMagnitudeCap", () => {
         application: createCapApplication({ kind: "weaknessDamageUp" }),
         expected:
           "ダメージアップ系の上限引き上げは武器種別・属性別の種別にのみ指定できます: kind=weaknessDamageUp",
+      },
+      {
+        name: "上限の無いダメージ上限アップを指定すると例外",
+        application: createCapApplication({ kind: "damageCapUp" }),
+        expected:
+          "上限の無い種別には上限引き上げ効果を指定できません: kind=damageCapUp",
+      },
+      {
+        name: "上限の無い剣攻撃ダメージ上限アップを指定すると例外",
+        application: createCapApplication({ kind: "swordDamageCapUp" }),
+        expected:
+          "上限の無い種別には上限引き上げ効果を指定できません: kind=swordDamageCapUp",
       },
     ])("$name", ({ application, expected }) => {
       expect(() =>
@@ -2005,5 +2353,50 @@ describe("ダメージアップのターンをまたいだシナリオ", () => {
 
     // 4 ターン目
     expect(readIce(state)).toBe(0);
+  });
+});
+
+describe("ダメージ上限アップのターンをまたいだシナリオ", () => {
+  it("代償の魔術 30000（2 ターン）の 2 ターン目にバオール 100000（2 ターン）を重ねると、1 ターン目 30000、2〜4 ターン目 130000、5 ターン目 0 になる", () => {
+    const readSword = (current: StatusEffectState): number =>
+      getDamageCapUpMagnitude(current, "battleAbility", "sword");
+
+    // 1 ターン目
+    let state = applyAll([
+      createApplication({
+        kind: "damageCapUp",
+        magnitude: 30000,
+        duration: turns(2),
+        source: osvaldPriceOfMagic,
+      }),
+    ]);
+    expect(readSword(state)).toBe(30000);
+    state = elapseStatusEffectTurn(state);
+
+    // 2 ターン目: 残り 1 ターンに 2 ターンが合算され、残り 3 ターンになる
+    state = applyAll(
+      [
+        createApplication({
+          kind: "damageCapUp",
+          magnitude: 100000,
+          duration: turns(2),
+          source: lueckBaor,
+        }),
+      ],
+      state,
+    );
+    expect(readSword(state)).toBe(130000);
+    state = elapseStatusEffectTurn(state);
+
+    // 3 ターン目: 代償の魔術のターンは過ぎているが、まとまりが切れるまで効果量は下がらない
+    expect(readSword(state)).toBe(130000);
+    state = elapseStatusEffectTurn(state);
+
+    // 4 ターン目
+    expect(readSword(state)).toBe(130000);
+    state = elapseStatusEffectTurn(state);
+
+    // 5 ターン目
+    expect(readSword(state)).toBe(0);
   });
 });

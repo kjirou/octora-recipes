@@ -2,12 +2,15 @@ import { describe, expect, it, test } from "vitest";
 
 import {
   ATTACK_TYPE_DAMAGE_UP_KINDS,
+  DAMAGE_CAP_UP_KIND_DEFINITIONS,
   DAMAGE_UP_KIND_DEFINITIONS,
   STATUS_EFFECT_KIND_DEFINITIONS,
   getAttackTypeDamageUpKind,
   getStatusEffectKindDefinition,
   getStatusEffectPolarity,
+  isDamageCapUpStatusEffectKind,
   isDamageUpStatusEffectKind,
+  listDamageCapUpKindDefinitions,
   listDamageUpKindDefinitions,
   listStatusEffectKinds,
 } from "./statusEffectKind";
@@ -67,11 +70,40 @@ describe("ATTACK_TYPE_DAMAGE_UP_KINDS", () => {
   });
 });
 
+describe("DAMAGE_CAP_UP_KIND_DEFINITIONS", () => {
+  it("キーと定義内の kind が一致している", () => {
+    for (const [key, definition] of Object.entries(
+      DAMAGE_CAP_UP_KIND_DEFINITIONS,
+    )) {
+      expect(definition.kind).toBe(key);
+    }
+  });
+
+  it("ダメージ上限アップ系の種別はすべて、効果量が絶対値で上限の無いバフ", () => {
+    for (const { kind } of Object.values(DAMAGE_CAP_UP_KIND_DEFINITIONS)) {
+      expect(getStatusEffectKindDefinition(kind)).toMatchObject({
+        polarity: "buff",
+        magnitudeUnit: "absolute",
+        defaultMagnitudeCap: null,
+      });
+    }
+  });
+
+  it("攻撃種別を対象にする定義は、攻撃種別 14 種のそれぞれに 1 つずつある", () => {
+    const attackTypes = listDamageCapUpKindDefinitions().flatMap(
+      ({ target }) => (target.type === "attackType" ? [target.attackType] : []),
+    );
+    expect(attackTypes.sort()).toStrictEqual(
+      Object.keys(ATTACK_TYPE_DAMAGE_UP_KINDS).sort(),
+    );
+  });
+});
+
 describe("listStatusEffectKinds", () => {
   it("すべての種別を ASCII 順で返す", () => {
     const kinds = listStatusEffectKinds();
     expect(kinds).toStrictEqual([...kinds].sort());
-    expect(kinds).toHaveLength(32);
+    expect(kinds).toHaveLength(49);
   });
 });
 
@@ -88,12 +120,42 @@ describe("getStatusEffectKindDefinition", () => {
         kind: "physicalAttackUp",
         name: "物攻アップ",
         polarity: "buff",
+        magnitudeUnit: "percent",
+        defaultMagnitudeCap: 30,
       },
     },
     {
       name: "速度ダウンの定義を返す",
       args: ["speedDown"],
-      expected: { kind: "speedDown", name: "速度ダウン", polarity: "debuff" },
+      expected: {
+        kind: "speedDown",
+        name: "速度ダウン",
+        polarity: "debuff",
+        magnitudeUnit: "percent",
+        defaultMagnitudeCap: 30,
+      },
+    },
+    {
+      name: "剣攻撃ダメージアップの定義を返す",
+      args: ["swordDamageUp"],
+      expected: {
+        kind: "swordDamageUp",
+        name: "剣攻撃ダメージアップ",
+        polarity: "buff",
+        magnitudeUnit: "percent",
+        defaultMagnitudeCap: 30,
+      },
+    },
+    {
+      name: "ダメージ上限アップの定義を返す",
+      args: ["damageCapUp"],
+      expected: {
+        kind: "damageCapUp",
+        name: "ダメージ上限アップ",
+        polarity: "buff",
+        magnitudeUnit: "absolute",
+        defaultMagnitudeCap: null,
+      },
     },
   ])("$name", ({ args, expected }) => {
     expect(getStatusEffectKindDefinition(...args)).toStrictEqual(expected);
@@ -177,6 +239,11 @@ describe("isDamageUpStatusEffectKind", () => {
       args: ["physicalAttackUp"],
       expected: false,
     },
+    {
+      name: "ダメージ上限アップはダメージアップ系ではない",
+      args: ["damageCapUp"],
+      expected: false,
+    },
   ])("$name", ({ args, expected }) => {
     expect(isDamageUpStatusEffectKind(...args)).toBe(expected);
   });
@@ -189,6 +256,47 @@ describe("listDamageUpKindDefinitions", () => {
     );
     expect(kinds).toStrictEqual([...kinds].sort());
     expect(kinds).toHaveLength(20);
+  });
+});
+
+describe("isDamageCapUpStatusEffectKind", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof isDamageCapUpStatusEffectKind>;
+    expected: ReturnType<typeof isDamageCapUpStatusEffectKind>;
+  }>([
+    {
+      name: "ダメージ上限アップ（全攻撃）はダメージ上限アップ系",
+      args: ["damageCapUp"],
+      expected: true,
+    },
+    {
+      name: "氷属性ダメージ上限アップはダメージ上限アップ系",
+      args: ["iceDamageCapUp"],
+      expected: true,
+    },
+    {
+      name: "ダメージアップ（全攻撃）はダメージ上限アップ系ではない",
+      args: ["damageUp"],
+      expected: false,
+    },
+    {
+      name: "物攻アップはダメージ上限アップ系ではない",
+      args: ["physicalAttackUp"],
+      expected: false,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(isDamageCapUpStatusEffectKind(...args)).toBe(expected);
+  });
+});
+
+describe("listDamageCapUpKindDefinitions", () => {
+  it("17 種の定義を ASCII 順で返す", () => {
+    const kinds = listDamageCapUpKindDefinitions().map(
+      (definition) => definition.kind,
+    );
+    expect(kinds).toStrictEqual([...kinds].sort());
+    expect(kinds).toHaveLength(17);
   });
 });
 
