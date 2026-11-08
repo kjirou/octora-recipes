@@ -3,7 +3,6 @@ import { describe, expect, it, test } from "vitest";
 import type {
   StatusEffectApplication,
   StatusEffectDuration,
-  StatusEffectKind,
   StatusEffectPool,
   StatusEffectSource,
   StatusEffectState,
@@ -15,23 +14,9 @@ import {
   findStatusEffectPool,
   getStatusEffectMagnitude,
   getStatusEffectRemainingTurns,
-  isSameStatusEffectKind,
   isSameStatusEffectSource,
   removePermanentStatusEffect,
 } from "./statusEffect";
-
-const physicalAttack: StatusEffectKind = {
-  category: "parameter",
-  parameter: "physicalAttack",
-};
-const elementalAttack: StatusEffectKind = {
-  category: "parameter",
-  parameter: "elementalAttack",
-};
-const physicalDefense: StatusEffectKind = {
-  category: "parameter",
-  parameter: "physicalDefense",
-};
 
 const permanent: StatusEffectDuration = { type: "permanent" };
 const turns = (turns: number): StatusEffectDuration => ({
@@ -64,8 +49,7 @@ const createApplication = (
   overrides: Partial<StatusEffectApplication> = {},
 ): StatusEffectApplication => ({
   slot: "battleAbility",
-  polarity: "debuff",
-  kind: physicalAttack,
+  kind: "physicalAttackDown",
   magnitude: 20,
   duration: turns(2),
   source: violaAntiAttack2,
@@ -77,8 +61,7 @@ const createPool = (
   overrides: Partial<StatusEffectPool> = {},
 ): StatusEffectPool => ({
   slot: "battleAbility",
-  polarity: "debuff",
-  kind: physicalAttack,
+  kind: "physicalAttackDown",
   permanentSources: [],
   timedMagnitude: 0,
   remainingTurns: 0,
@@ -95,30 +78,6 @@ const applyAll = (
     (state, application) => applyStatusEffect(state, application),
     initial,
   );
-
-describe("isSameStatusEffectKind", () => {
-  test.each<{
-    name: string;
-    args: Parameters<typeof isSameStatusEffectKind>;
-    expected: ReturnType<typeof isSameStatusEffectKind>;
-  }>([
-    {
-      name: "同じパラメーターなら同じ種類",
-      args: [
-        physicalAttack,
-        { category: "parameter", parameter: "physicalAttack" },
-      ],
-      expected: true,
-    },
-    {
-      name: "違うパラメーターなら違う種類",
-      args: [physicalAttack, elementalAttack],
-      expected: false,
-    },
-  ])("$name", ({ args, expected }) => {
-    expect(isSameStatusEffectKind(...args)).toBe(expected);
-  });
-});
 
 describe("isSameStatusEffectSource", () => {
   test.each<{
@@ -168,7 +127,7 @@ describe("isSameStatusEffectSource", () => {
 describe("findStatusEffectPool", () => {
   const state = applyAll([
     createApplication(),
-    createApplication({ polarity: "buff", source: sourceA }),
+    createApplication({ kind: "physicalAttackUp", source: sourceA }),
     createApplication({ slot: "ultimate", source: sourceB }),
   ]);
 
@@ -178,8 +137,8 @@ describe("findStatusEffectPool", () => {
     expected: ReturnType<typeof findStatusEffectPool>;
   }>([
     {
-      name: "枠・向き・種類がすべて一致するまとまりを返す",
-      args: [state, "battleAbility", "debuff", physicalAttack],
+      name: "枠・種別が一致するまとまりを返す",
+      args: [state, "battleAbility", "physicalAttackDown"],
       expected: createPool({
         timedMagnitude: 20,
         remainingTurns: 2,
@@ -187,10 +146,10 @@ describe("findStatusEffectPool", () => {
       }),
     },
     {
-      name: "向きが違えば別のまとまりを返す",
-      args: [state, "battleAbility", "buff", physicalAttack],
+      name: "種別が違えば別のまとまりを返す",
+      args: [state, "battleAbility", "physicalAttackUp"],
       expected: createPool({
-        polarity: "buff",
+        kind: "physicalAttackUp",
         timedMagnitude: 20,
         remainingTurns: 2,
         timedSources: [sourceA],
@@ -198,7 +157,7 @@ describe("findStatusEffectPool", () => {
     },
     {
       name: "枠が違えば別のまとまりを返す",
-      args: [state, "ultimate", "debuff", physicalAttack],
+      args: [state, "ultimate", "physicalAttackDown"],
       expected: createPool({
         slot: "ultimate",
         timedMagnitude: 20,
@@ -207,13 +166,13 @@ describe("findStatusEffectPool", () => {
       }),
     },
     {
-      name: "種類が一致しなければ undefined",
-      args: [state, "battleAbility", "debuff", elementalAttack],
+      name: "一致するまとまりが無ければ undefined",
+      args: [state, "battleAbility", "elementalAttackDown"],
       expected: undefined,
     },
     {
       name: "空の状態なら undefined",
-      args: [[], "battleAbility", "debuff", physicalAttack],
+      args: [[], "battleAbility", "physicalAttackDown"],
       expected: undefined,
     },
   ])("$name", ({ args, expected }) => {
@@ -232,8 +191,7 @@ describe("getStatusEffectMagnitude", () => {
       args: [
         applyAll([createApplication({ magnitude: 15 })]),
         "battleAbility",
-        "debuff",
-        physicalAttack,
+        "physicalAttackDown",
       ],
       expected: 15,
     },
@@ -242,8 +200,7 @@ describe("getStatusEffectMagnitude", () => {
       args: [
         applyAll([createApplication({ magnitude: 10, duration: permanent })]),
         "battleAbility",
-        "debuff",
-        physicalAttack,
+        "physicalAttackDown",
       ],
       expected: 10,
     },
@@ -253,22 +210,21 @@ describe("getStatusEffectMagnitude", () => {
         applyAll([
           createApplication({
             slot: "supportAbility",
-            polarity: "buff",
+            kind: "physicalAttackUp",
             magnitude: 10,
             duration: permanent,
             source: permanentSource1,
           }),
           createApplication({
             slot: "supportAbility",
-            polarity: "buff",
+            kind: "physicalAttackUp",
             magnitude: 15,
             duration: turns(3),
             source: timedSource1,
           }),
         ]),
         "supportAbility",
-        "buff",
-        physicalAttack,
+        "physicalAttackUp",
       ],
       expected: 25,
     },
@@ -281,8 +237,7 @@ describe("getStatusEffectMagnitude", () => {
           createApplication({ magnitude: 20, source: sourceB }),
         ]),
         "battleAbility",
-        "debuff",
-        physicalAttack,
+        "physicalAttackDown",
       ],
       expected: 30,
     },
@@ -294,8 +249,7 @@ describe("getStatusEffectMagnitude", () => {
           createApplication({ magnitude: 25, source: sourceA }),
         ]),
         "battleAbility",
-        "debuff",
-        physicalAttack,
+        "physicalAttackDown",
         { magnitudeCap: 50 },
       ],
       expected: 50,
@@ -305,8 +259,7 @@ describe("getStatusEffectMagnitude", () => {
       args: [
         applyAll([createApplication()]),
         "supportAbility",
-        "debuff",
-        physicalAttack,
+        "physicalAttackDown",
       ],
       expected: 0,
     },
@@ -326,8 +279,7 @@ describe("getStatusEffectRemainingTurns", () => {
       args: [
         applyAll([createApplication({ duration: turns(3) })]),
         "battleAbility",
-        "debuff",
-        physicalAttack,
+        "physicalAttackDown",
       ],
       expected: 3,
     },
@@ -336,8 +288,7 @@ describe("getStatusEffectRemainingTurns", () => {
       args: [
         applyAll([createApplication({ duration: permanent })]),
         "battleAbility",
-        "debuff",
-        physicalAttack,
+        "physicalAttackDown",
       ],
       expected: 0,
     },
@@ -346,8 +297,7 @@ describe("getStatusEffectRemainingTurns", () => {
       args: [
         applyAll([createApplication()]),
         "battleAbility",
-        "buff",
-        physicalAttack,
+        "physicalAttackUp",
       ],
       expected: 0,
     },
@@ -403,19 +353,19 @@ describe("applyStatusEffect", () => {
         name: "同名アビリティでも使用キャラが違えば付与元が違うので加算される（バックスタッブ）",
         applications: [
           createApplication({
-            kind: physicalDefense,
+            kind: "physicalDefenseDown",
             magnitude: 15,
             source: { characterId: "cress", abilityId: "backstab" },
           }),
           createApplication({
-            kind: physicalDefense,
+            kind: "physicalDefenseDown",
             magnitude: 15,
             source: { characterId: "duran", abilityId: "backstab" },
           }),
         ],
         expected: [
           createPool({
-            kind: physicalDefense,
+            kind: "physicalDefenseDown",
             timedMagnitude: 30,
             remainingTurns: 4,
             timedSources: [
@@ -532,19 +482,19 @@ describe("applyStatusEffect", () => {
         name: "枠が違えば効果量もターンも別々に管理される（達人の鼓舞Ⅲ + 必殺技 撫でし子の舞）",
         applications: [
           createApplication({
-            polarity: "buff",
+            kind: "physicalAttackUp",
             source: { characterId: "lynette", abilityId: "tatsujinNoKobu3" },
           }),
           createApplication({
             slot: "ultimate",
-            polarity: "buff",
+            kind: "physicalAttackUp",
             duration: turns(3),
             source: { characterId: "primrose", abilityId: "ultimate" },
           }),
         ],
         expected: [
           createPool({
-            polarity: "buff",
+            kind: "physicalAttackUp",
             timedMagnitude: 20,
             remainingTurns: 2,
             timedSources: [
@@ -553,7 +503,7 @@ describe("applyStatusEffect", () => {
           }),
           createPool({
             slot: "ultimate",
-            polarity: "buff",
+            kind: "physicalAttackUp",
             timedMagnitude: 20,
             remainingTurns: 3,
             timedSources: [{ characterId: "primrose", abilityId: "ultimate" }],
@@ -561,20 +511,20 @@ describe("applyStatusEffect", () => {
         ],
       },
       {
-        name: "同じ枠でも種類が違えば別々に管理される（物攻ダウンと属攻ダウン）",
+        name: "同じ枠でも種別が違えば別々に管理される（物攻ダウンと属攻ダウン）",
         applications: [
-          createApplication({ kind: physicalAttack }),
-          createApplication({ kind: elementalAttack }),
+          createApplication({ kind: "physicalAttackDown" }),
+          createApplication({ kind: "elementalAttackDown" }),
         ],
         expected: [
           createPool({
-            kind: physicalAttack,
+            kind: "physicalAttackDown",
             timedMagnitude: 20,
             remainingTurns: 2,
             timedSources: [violaAntiAttack2],
           }),
           createPool({
-            kind: elementalAttack,
+            kind: "elementalAttackDown",
             timedMagnitude: 20,
             remainingTurns: 2,
             timedSources: [violaAntiAttack2],
@@ -582,20 +532,20 @@ describe("applyStatusEffect", () => {
         ],
       },
       {
-        name: "同じ種類でもバフとデバフは別々に管理される（相殺しない）",
+        name: "同じパラメーターのアップとダウンは別の種別として管理される（相殺しない）",
         applications: [
-          createApplication({ polarity: "buff", source: sourceA }),
-          createApplication({ polarity: "debuff", source: sourceB }),
+          createApplication({ kind: "physicalAttackUp", source: sourceA }),
+          createApplication({ kind: "physicalAttackDown", source: sourceB }),
         ],
         expected: [
           createPool({
-            polarity: "buff",
+            kind: "physicalAttackUp",
             timedMagnitude: 20,
             remainingTurns: 2,
             timedSources: [sourceA],
           }),
           createPool({
-            polarity: "debuff",
+            kind: "physicalAttackDown",
             timedMagnitude: 20,
             remainingTurns: 2,
             timedSources: [sourceB],
@@ -837,17 +787,17 @@ describe("removePermanentStatusEffect", () => {
       expected: [],
     },
     {
-      name: "複数の種類にまたがる同じ付与元をまとめて取り除く",
+      name: "複数の種別にまたがる同じ付与元をまとめて取り除く",
       args: [
         applyAll([
           createApplication({
-            kind: physicalAttack,
+            kind: "physicalAttackUp",
             magnitude: 10,
             duration: permanent,
             source: permanentSource1,
           }),
           createApplication({
-            kind: elementalAttack,
+            kind: "elementalAttackUp",
             magnitude: 10,
             duration: permanent,
             source: permanentSource1,
@@ -971,18 +921,16 @@ describe("elapseStatusEffectTurn", () => {
 });
 
 describe("ターンをまたいだシナリオ", () => {
-  const readBattleAbilityBuff = (state: StatusEffectState) => ({
+  const readBattleAbilityAttackUp = (state: StatusEffectState) => ({
     magnitude: getStatusEffectMagnitude(
       state,
       "battleAbility",
-      "buff",
-      physicalAttack,
+      "physicalAttackUp",
     ),
     remainingTurns: getStatusEffectRemainingTurns(
       state,
       "battleAbility",
-      "buff",
-      physicalAttack,
+      "physicalAttackUp",
     ),
   });
 
@@ -990,9 +938,13 @@ describe("ターンをまたいだシナリオ", () => {
     // 1 ターン目
     let state = applyStatusEffect(
       [],
-      createApplication({ polarity: "buff", magnitude: 10, source: sourceA }),
+      createApplication({
+        kind: "physicalAttackUp",
+        magnitude: 10,
+        source: sourceA,
+      }),
     );
-    expect(readBattleAbilityBuff(state)).toStrictEqual({
+    expect(readBattleAbilityAttackUp(state)).toStrictEqual({
       magnitude: 10,
       remainingTurns: 2,
     });
@@ -1001,30 +953,34 @@ describe("ターンをまたいだシナリオ", () => {
     // 2 ターン目: 残り 1 ターンに 2 ターン分が足されて 3 ターンになる
     state = applyStatusEffect(
       state,
-      createApplication({ polarity: "buff", magnitude: 20, source: sourceB }),
+      createApplication({
+        kind: "physicalAttackUp",
+        magnitude: 20,
+        source: sourceB,
+      }),
     );
-    expect(readBattleAbilityBuff(state)).toStrictEqual({
+    expect(readBattleAbilityAttackUp(state)).toStrictEqual({
       magnitude: 30,
       remainingTurns: 3,
     });
     state = elapseStatusEffectTurn(state);
 
     // 3 ターン目
-    expect(readBattleAbilityBuff(state)).toStrictEqual({
+    expect(readBattleAbilityAttackUp(state)).toStrictEqual({
       magnitude: 30,
       remainingTurns: 2,
     });
     state = elapseStatusEffectTurn(state);
 
     // 4 ターン目: 効果量は切れる直前まで 30% のまま
-    expect(readBattleAbilityBuff(state)).toStrictEqual({
+    expect(readBattleAbilityAttackUp(state)).toStrictEqual({
       magnitude: 30,
       remainingTurns: 1,
     });
     state = elapseStatusEffectTurn(state);
 
     // 5 ターン目: 消えている
-    expect(readBattleAbilityBuff(state)).toStrictEqual({
+    expect(readBattleAbilityAttackUp(state)).toStrictEqual({
       magnitude: 0,
       remainingTurns: 0,
     });
@@ -1032,22 +988,34 @@ describe("ターンをまたいだシナリオ", () => {
 
   it("切れる前にどちらの技で延長しても 30% が維持される", () => {
     let state = applyAll([
-      createApplication({ polarity: "buff", magnitude: 10, source: sourceA }),
-      createApplication({ polarity: "buff", magnitude: 20, source: sourceB }),
+      createApplication({
+        kind: "physicalAttackUp",
+        magnitude: 10,
+        source: sourceA,
+      }),
+      createApplication({
+        kind: "physicalAttackUp",
+        magnitude: 20,
+        source: sourceB,
+      }),
     ]);
     state = elapseStatusEffectTurn(state);
     state = elapseStatusEffectTurn(state);
     state = elapseStatusEffectTurn(state);
-    expect(readBattleAbilityBuff(state)).toStrictEqual({
+    expect(readBattleAbilityAttackUp(state)).toStrictEqual({
       magnitude: 30,
       remainingTurns: 1,
     });
 
     state = applyStatusEffect(
       state,
-      createApplication({ polarity: "buff", magnitude: 10, source: sourceA }),
+      createApplication({
+        kind: "physicalAttackUp",
+        magnitude: 10,
+        source: sourceA,
+      }),
     );
-    expect(readBattleAbilityBuff(state)).toStrictEqual({
+    expect(readBattleAbilityAttackUp(state)).toStrictEqual({
       magnitude: 30,
       remainingTurns: 3,
     });
@@ -1055,19 +1023,19 @@ describe("ターンをまたいだシナリオ", () => {
 
   it("サポアビ枠のターン無し 10% とターン付き 15% は合わせて 25% になり、ターン付きが切れると 10% に戻る", () => {
     const read = (state: StatusEffectState) =>
-      getStatusEffectMagnitude(state, "supportAbility", "buff", physicalAttack);
+      getStatusEffectMagnitude(state, "supportAbility", "physicalAttackUp");
 
     let state = applyAll([
       createApplication({
         slot: "supportAbility",
-        polarity: "buff",
+        kind: "physicalAttackUp",
         magnitude: 10,
         duration: permanent,
         source: permanentSource1,
       }),
       createApplication({
         slot: "supportAbility",
-        polarity: "buff",
+        kind: "physicalAttackUp",
         magnitude: 15,
         duration: turns(2),
         source: timedSource1,

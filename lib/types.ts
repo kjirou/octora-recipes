@@ -30,19 +30,6 @@ export type Element = "dark" | "fire" | "ice" | "light" | "lightning" | "wind";
 /** 攻撃種別（14 種）。弱点・シールド・耐性アップ / ダウンの単位になる。 */
 export type AttackType = Element | Weapon;
 
-/**
- * バフ・デバフの対象になるバトル中のパラメーター。
- *
- * 物攻・属攻・物防・属防・速度・会心の 6 つ。
- */
-export type BattleParameter =
-  | "criticalRate"
-  | "elementalAttack"
-  | "elementalDefense"
-  | "physicalAttack"
-  | "physicalDefense"
-  | "speed";
-
 // =============================================================================
 // 2. マスターデータ
 // =============================================================================
@@ -65,14 +52,43 @@ export type BoostLevel = 0 | 1 | 2 | 3;
 // --- ステータス効果（バフ・デバフ） -------------------------------------------
 //
 // ゲーム内では「強化効果（バフ）」「弱体効果（デバフ）」と呼ばれる。
-// 効果量（%）は「枠 × 種類 × 向き」ごとにまとめて管理され、同じまとまりの中で加算される。
+// 効果量（%）は「枠 × 種別」ごとにまとめて管理され、同じまとまりの中で加算される。
 // 継続ターンも同じまとまりの中で合算される。詳細なルールは lib/domain/statusEffect.ts を参照。
 //
-// 現時点の実装対象はパラメーター系（物攻・属攻・物防・属防・速度・会心）のみ。
+// 現時点の実装対象はパラメーター系（物攻・属攻・物防・属防・速度・会心）のアップ / ダウンのみ。
 // 耐性系・ダメージアップ系・威力アップなどは今後の検討事項。
 
-/** バフ（強化効果）かデバフ（弱体効果）か。 */
+/**
+ * ステータス効果の種別。アップ / ダウンを展開した 1 つの列挙として扱う。
+ *
+ * バフにしか無い種別（威力アップなど）やデバフにしか無い種別があるため、
+ * 「パラメーター × 向き」の組み合わせではなく種別そのものを列挙する。
+ * 各種別の属性（バフかデバフか、表示名）は {@link StatusEffectKindDefinition} をマスターデータとして持つ。
+ */
+export type StatusEffectKind =
+  | "criticalRateDown"
+  | "criticalRateUp"
+  | "elementalAttackDown"
+  | "elementalAttackUp"
+  | "elementalDefenseDown"
+  | "elementalDefenseUp"
+  | "physicalAttackDown"
+  | "physicalAttackUp"
+  | "physicalDefenseDown"
+  | "physicalDefenseUp"
+  | "speedDown"
+  | "speedUp";
+
+/** バフ（強化効果）かデバフ（弱体効果）か。種別の属性であり、種別から決まる。 */
 export type StatusEffectPolarity = "buff" | "debuff";
+
+/** ステータス効果の種別のマスターデータ 1 件。 */
+export type StatusEffectKindDefinition = {
+  kind: StatusEffectKind;
+  /** 日本語の表示名（例: 物攻アップ）。 */
+  name: string;
+  polarity: StatusEffectPolarity;
+};
 
 /**
  * バフ・デバフの「枠」。効果量の上限（基本 30%）は枠ごとに別々に数える。
@@ -89,18 +105,6 @@ export type StatusEffectSlot =
   | "sacredBeast"
   | "supportAbility"
   | "ultimate";
-
-/**
- * バフ・デバフの種類。
- *
- * - `parameter` … 物攻・属攻・物防・属防・速度・会心のアップ / ダウン
- *
- * 耐性系・ダメージアップ系などを扱う際は、ここにメンバーを追加する。
- */
-export type StatusEffectKind = {
-  category: "parameter";
-  parameter: BattleParameter;
-};
 
 /**
  * バフ・デバフの継続期間。
@@ -137,7 +141,6 @@ export type StatusEffectSource = {
  */
 export type StatusEffectApplication = {
   slot: StatusEffectSlot;
-  polarity: StatusEffectPolarity;
   kind: StatusEffectKind;
   /** 効果量（%）。正の値。 */
   magnitude: number;
@@ -160,7 +163,7 @@ export type StatusEffectPermanentSource = {
 };
 
 /**
- * ある対象にかかっている、同じ「枠 × 向き × 種類」のバフ・デバフのまとまり。
+ * ある対象にかかっている、同じ「枠 × 種別」のバフ・デバフのまとまり。
  *
  * 効果量はターン無し・ターン付きを合わせてこの単位で合算される。
  * 継続ターンはターン付きの効果だけで合算される。
@@ -168,7 +171,6 @@ export type StatusEffectPermanentSource = {
  */
 export type StatusEffectPool = {
   slot: StatusEffectSlot;
-  polarity: StatusEffectPolarity;
   kind: StatusEffectKind;
   /** ターン無し効果の一覧。 */
   permanentSources: StatusEffectPermanentSource[];

@@ -6,8 +6,10 @@
  *
  * 採用しているルール:
  *
- * - 効果量（%）は「枠 × 向き × 種類」のまとまり（{@link StatusEffectPool}）ごとに合算し、
+ * - 効果量（%）は「枠 × 種別」のまとまり（{@link StatusEffectPool}）ごとに合算し、
  *   参照時に上限（基本 30%）を適用する。枠が違えば別々に 30% まで積める。
+ *   種別はアップ / ダウンを展開した列挙なので、物攻アップと物攻ダウンは別のまとまりになる
+ *   （相殺はしない）。
  * - ターン無し効果とターン付き効果は同じまとまりに効果量を合算する
  *   （例: サポアビ枠でターン無し物攻 +10% とターン付き物攻 +15% なら、サポアビ枠として +25%）。
  * - ターン付き効果は、同じ付与元（同キャラ・同アビリティ）を重ねても効果量が増えない。
@@ -26,7 +28,6 @@
 import type {
   StatusEffectApplication,
   StatusEffectKind,
-  StatusEffectPolarity,
   StatusEffectPool,
   StatusEffectSlot,
   StatusEffectSource,
@@ -47,12 +48,6 @@ export type StatusEffectMagnitudeOptions = {
   magnitudeCap?: number;
 };
 
-/** 2 つのバフ・デバフの種類が同じかを返す。 */
-export const isSameStatusEffectKind = (
-  a: StatusEffectKind,
-  b: StatusEffectKind,
-): boolean => a.parameter === b.parameter;
-
 /** 2 つの付与元が同じかを返す。キャラ・アビリティ・区別がすべて一致すれば同じ。 */
 export const isSameStatusEffectSource = (
   a: StatusEffectSource,
@@ -62,33 +57,26 @@ export const isSameStatusEffectSource = (
   a.abilityId === b.abilityId &&
   a.variant === b.variant;
 
-/** 指定した「枠 × 向き × 種類」のまとまりを返す。無ければ undefined。 */
+/** 指定した「枠 × 種別」のまとまりを返す。無ければ undefined。 */
 export const findStatusEffectPool = (
   state: StatusEffectState,
   slot: StatusEffectSlot,
-  polarity: StatusEffectPolarity,
   kind: StatusEffectKind,
 ): StatusEffectPool | undefined =>
-  state.find(
-    (pool) =>
-      pool.slot === slot &&
-      pool.polarity === polarity &&
-      isSameStatusEffectKind(pool.kind, kind),
-  );
+  state.find((pool) => pool.slot === slot && pool.kind === kind);
 
 /**
- * 指定した「枠 × 向き × 種類」の現在の効果量（%）を返す。かかっていなければ 0。
+ * 指定した「枠 × 種別」の現在の効果量（%）を返す。かかっていなければ 0。
  *
  * ターン無し・ターン付きの効果量を合計し、上限を適用した値を返す。
  */
 export const getStatusEffectMagnitude = (
   state: StatusEffectState,
   slot: StatusEffectSlot,
-  polarity: StatusEffectPolarity,
   kind: StatusEffectKind,
   options: StatusEffectMagnitudeOptions = {},
 ): number => {
-  const pool = findStatusEffectPool(state, slot, polarity, kind);
+  const pool = findStatusEffectPool(state, slot, kind);
   if (pool === undefined) {
     return 0;
   }
@@ -100,14 +88,12 @@ export const getStatusEffectMagnitude = (
   return Math.min(permanentMagnitude + pool.timedMagnitude, magnitudeCap);
 };
 
-/** 指定した「枠 × 向き × 種類」のターン付き効果の残りターン数を返す。無ければ 0。 */
+/** 指定した「枠 × 種別」のターン付き効果の残りターン数を返す。無ければ 0。 */
 export const getStatusEffectRemainingTurns = (
   state: StatusEffectState,
   slot: StatusEffectSlot,
-  polarity: StatusEffectPolarity,
   kind: StatusEffectKind,
-): number =>
-  findStatusEffectPool(state, slot, polarity, kind)?.remainingTurns ?? 0;
+): number => findStatusEffectPool(state, slot, kind)?.remainingTurns ?? 0;
 
 /** ターン無し・ターン付きのどちらの効果も残っていないまとまりか。 */
 const isEmptyStatusEffectPool = (pool: StatusEffectPool): boolean =>
@@ -134,7 +120,6 @@ export const applyStatusEffect = (
 ): StatusEffectState => {
   const {
     slot,
-    polarity,
     kind,
     magnitude,
     duration,
@@ -155,10 +140,9 @@ export const applyStatusEffect = (
     );
   }
 
-  const existing = findStatusEffectPool(state, slot, polarity, kind);
+  const existing = findStatusEffectPool(state, slot, kind);
   const base: StatusEffectPool = existing ?? {
     slot,
-    polarity,
     kind,
     permanentSources: [],
     timedMagnitude: 0,
