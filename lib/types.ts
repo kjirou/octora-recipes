@@ -78,6 +78,80 @@ export type Rarity = 3 | 4 | 5;
 // =============================================================================
 // 2. マスターデータ
 // =============================================================================
+//
+// キャラクター・アビリティのように「増え続ける・ID で参照する」静的データの型。
+// データ本体は lib/data/ に置く。データ種別ごとに次の 2 段の型を持つ。
+//
+// - XxxDataDef … データ定義用の型。省略可能なプロパティを含む。プロパティは ASCII 順
+// - XxxData … 省略可能なプロパティに既定値を補完した、読み取り専用の型
+//
+// ステータス効果の種別や状態異常の種別のような閉じた列挙のマスターデータは、
+// ここではなく lib/domain/ に置く。
+
+/** マスターデータの ID。データ種別の中で一意。 */
+export type DataId = string;
+
+/**
+ * アビリティの種類。
+ *
+ * - `battleAbility` … バトルアビリティ（SP 消費）
+ * - `exAbility` … EX アビリティ（使用回数制限のあるバトルアビリティ）
+ * - `supportAbility` … サポートアビリティ（自動発動、行動を消費しない）
+ * - `ultimate` … 必殺技
+ */
+export type AbilityCategory =
+  "battleAbility" | "exAbility" | "supportAbility" | "ultimate";
+
+/**
+ * アビリティのデータ定義用の型。
+ *
+ * キャラクターへの参照は持たない（キャラクター側が {@link CharacterDataDef.abilityDataIds} で参照する）。
+ * 効果の内容（付与するステータス効果・威力アップなど）は未定義。
+ */
+export type AbilityDataDef = Readonly<{
+  category: AbilityCategory;
+  /** 一意な ID（例: `"lueck:albedo_chieftains_daughter"`）。命名規則は lib/data/abilities/index.ts を参照。 */
+  id: DataId;
+  /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"調合：ブラスターマイン"`）。 */
+  name: string;
+}>;
+
+/** アビリティの読み取り専用データ。 */
+export type AbilityData = Readonly<Required<AbilityDataDef>>;
+
+/** キャラクター（旅人）のデータ定義用の型。 */
+export type CharacterDataDef = Readonly<{
+  /** そのキャラクターが持つアビリティの ID 一覧。 */
+  abilityDataIds: readonly DataId[];
+  /**
+   * 英語版での表示名。
+   *
+   * - 未指定時は `null` で補完される。
+   */
+  englishName?: string | null;
+  /** 一意な ID（例: `"lueck"`）。命名規則は lib/data/characters/index.ts を参照。 */
+  id: DataId;
+  influence: Influence;
+  job: Job;
+  /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"七英雄ロックブーケ"`）。 */
+  name: string;
+  rarity: Rarity;
+}>;
+
+/** キャラクターの読み取り専用データ。 */
+export type CharacterData = Readonly<Required<CharacterDataDef>>;
+
+/**
+ * 全データ種別の辞書と一覧をまとめたもの。
+ *
+ * ロジック側は lib/data/ を直接 import せず、これを引数で受け取る。
+ */
+export type DataCatalog = Readonly<{
+  abilityDataDict: Readonly<Record<DataId, AbilityData>>;
+  abilityDataList: ReadonlyArray<AbilityData>;
+  characterDataDict: Readonly<Record<DataId, CharacterData>>;
+  characterDataList: ReadonlyArray<CharacterData>;
+}>;
 
 // =============================================================================
 // 3. パーティ編成
