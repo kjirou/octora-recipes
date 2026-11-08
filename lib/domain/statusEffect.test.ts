@@ -326,6 +326,26 @@ const mermaidsSorrowApplications: StatusEffectApplication[] = (
   }),
 );
 
+/**
+ * 踊子 リンユウEX「人魚の悲情」: バトアビによる / サポアビと装備性能による 氷・風・光耐性ダウンを
+ * 受けた際の上限が 50% になる効果（3 ターン）。3 種別 × 2 枠の 6 件。
+ */
+const mermaidsSorrowCaps: StatusEffectMagnitudeCapApplication[] = (
+  ["battleAbility", "supportAbility"] as const
+).flatMap((slot) =>
+  (
+    ["iceResistanceDown", "windResistanceDown", "lightResistanceDown"] as const
+  ).map((kind) =>
+    createCapApplication({
+      slot,
+      kind,
+      cap: 50,
+      duration: turns(3),
+      source: linyuMermaidsSorrow,
+    }),
+  ),
+);
+
 /** リュック「調合：バオール」: 味方単体に属性耐性アップ 30%（2 ターン）。 */
 const baorResistanceApplication: StatusEffectApplication = createApplication({
   kind: "elementalResistanceUp",
@@ -2851,5 +2871,41 @@ describe("耐性ダウンのターンをまたいだシナリオ", () => {
 
     // 4 ターン目
     expect(readSpear(state)).toBe(0);
+  });
+});
+
+describe("耐性ダウンの上限引き上げのターンをまたいだシナリオ", () => {
+  it("人魚の悲情の上限 50%（3 ターン）は 3 ターン目まで有効で、4 ターン目にはサポアビ枠の氷攻撃に対する上限が 30% に戻る", () => {
+    const readIce = (current: StatusEffectState): number =>
+      getResistanceMagnitude(current, "supportAbility", "ice", "debuff");
+
+    // 1 ターン目: 人魚の悲情の氷 30% + ターン無しの氷 30% + 魅惑の誘いの属性 20% = 80% が上限 50% で止まる
+    let state = applyAllCaps(
+      mermaidsSorrowCaps,
+      applyAll([
+        ...mermaidsSorrowApplications,
+        createApplication({
+          slot: "supportAbility",
+          kind: "iceResistanceDown",
+          magnitude: 30,
+          duration: permanent,
+          source: sourceA,
+        }),
+        enticingInvitationApplication,
+      ]),
+    );
+    expect(readIce(state)).toBe(50);
+    state = elapseStatusEffectTurn(state);
+
+    // 2 ターン目
+    expect(readIce(state)).toBe(50);
+    state = elapseStatusEffectTurn(state);
+
+    // 3 ターン目
+    expect(readIce(state)).toBe(50);
+    state = elapseStatusEffectTurn(state);
+
+    // 4 ターン目: 人魚の悲情の耐性ダウンと上限引き上げが切れ、残りの 50% が既定の上限 30% で止まる
+    expect(readIce(state)).toBe(30);
   });
 });
