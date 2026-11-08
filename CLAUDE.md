@@ -198,6 +198,13 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 - CI（GitHub Actions, `.github/workflows/ci.yml`）では Prettier のチェックとテストを実行する。
 - ディレクトリ方針: ルーティングは `app/`、ルーティングに関係しないコードは `lib/` に置く（`src/` は使わない）。パスエイリアスは `@/*` がリポジトリルートを指す。
 - **ドメインロジックは `lib/domain/` に置く**。ゲームルールの計算や判定など、React / Next.js に依存しない純粋な関数（「コーディングスタイル」節の参照透過で副作用のない関数の原則に従う）をモジュール単位（例: `lib/domain/boost.ts`）で配置し、型は `lib/types.ts` から `import type` で参照する。
+- **静的データ（マスターデータ）は `lib/data/` に置く**。キャラクター・アビリティのような「増え続ける・ID で参照する」データが対象。ステータス効果の種別や状態異常の種別のような閉じた列挙のマスターデータは `lib/domain/` に置いたままにする。データ定義の規約:
+  - 型は `lib/types.ts` の「2. マスターデータ」に、定義用の型 `XxxDataDef`（省略可能なプロパティを含む。プロパティは ASCII 順で、各プロパティに JSDoc で用途と既定値を書く）と、既定値を補完した読み取り専用の型 `XxxData = Readonly<Required<XxxDataDef>>` の 2 段で置く。ID の型は `DataId`。
+  - データ種別ごとにディレクトリ（例: `lib/data/characters/`）を作り、`index.ts` とカテゴリ別の分割ファイルで持つ。分割ファイルは `export const xxxJson = [ ... ] as const satisfies ReadonlyArray<XxxDataDef>;` で定義し、`(typeof xxxJson)[number]["id"]` で ID のリテラル union 型を導出する。
+  - `index.ts` は分割ファイルを結合し、`resolveXxxData` で既定値を補完した `xxxDataList`、`createDataDict`（`lib/dataDefinitionUtils.ts`）で作った `xxxDataDict`、型ガード `isXxxDataId`、全分割ファイルの ID を合成した union 型 `XxxDataId` を公開する。
+  - `index.ts` の先頭コメントに、分割の単位・ID の命名規則・プロパティの記述順（データ定義側は意味のグルーピング順）・エントリの並び順のガイドラインを書く。
+  - `lib/data/index.ts` は全種別の `xxxDataDict` / `xxxDataList` を `dataCatalog: DataCatalog` にまとめる。ロジック側はデータ種別のモジュールを直接 import せず、カタログを引数で受け取る。
+  - 各種別の `index.test.ts` で、ID の重複が無いこと・他種別への ID 参照が解決できることなどを `test.each(xxxDataList)("$id", ...)` でデータを静的に走査して検査する。走査の共通処理は `lib/data/testHelper.ts` に集める。
 - **ユニットテストは対象モジュールと同じディレクトリに `<module>.test.ts` として並置する**（例: `lib/domain/boost.test.ts`）。
 - **ドメイン型は `lib/types.ts` に集約**している。設計を 1 ファイルで俯瞰する目的で、意図的に分割せず大きなファイル（1000 行超を想定）として保つ。ゲームの概念を型で表すときはまずこのファイルを読み、追加もここに行う。
 
