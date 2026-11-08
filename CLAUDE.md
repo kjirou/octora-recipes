@@ -186,7 +186,7 @@ Next.js 固有の注意事項は `AGENTS.md` を参照してください（`next
 - 開発: `npm run dev`、ビルド: `npm run build`、lint: `npm run lint`、テスト: `npm run test`（Vitest。監視モードは `npm run test:watch`）、整形: `npm run format`（Prettier。チェックのみは `npm run format:check`）
 - CI（GitHub Actions, `.github/workflows/ci.yml`）では Prettier のチェックとテストを実行する。
 - ディレクトリ方針: ルーティングは `app/`、ルーティングに関係しないコードは `lib/` に置く（`src/` は使わない）。パスエイリアスは `@/*` がリポジトリルートを指す。
-- **ドメインロジックは `lib/domain/` に置く**。ゲームルールの計算や判定など、React / Next.js に依存しない純粋な関数をモジュール単位（例: `lib/domain/boost.ts`）で配置し、型は `lib/types.ts` から `import type` で参照する。
+- **ドメインロジックは `lib/domain/` に置く**。ゲームルールの計算や判定など、React / Next.js に依存しない純粋な関数（「コーディングスタイル」節の参照透過で副作用のない関数の原則に従う）をモジュール単位（例: `lib/domain/boost.ts`）で配置し、型は `lib/types.ts` から `import type` で参照する。
 - **ユニットテストは対象モジュールと同じディレクトリに `<module>.test.ts` として並置する**（例: `lib/domain/boost.test.ts`）。
 - **ドメイン型は `lib/types.ts` に集約**している。設計を 1 ファイルで俯瞰する目的で、意図的に分割せず大きなファイル（1000 行超を想定）として保つ。ゲームの概念を型で表すときはまずこのファイルを読み、追加もここに行う。
 
