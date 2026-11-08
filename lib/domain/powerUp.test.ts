@@ -525,25 +525,45 @@ describe("applyPowerUp", () => {
     expect(state).toStrictEqual(snapshot);
   });
 
-  test.each<{ name: string; application: PowerUpApplication }>([
-    { name: "効果量が 0", application: createApplication({ magnitude: 0 }) },
-    { name: "効果量が負", application: createApplication({ magnitude: -1 }) },
+  test.each<{
+    name: string;
+    application: PowerUpApplication;
+    expected: string;
+  }>([
     {
-      name: "効果量が NaN",
+      name: "効果量が 0 なら例外",
+      application: createApplication({ magnitude: 0 }),
+      expected: "効果量は正の数である必要があります",
+    },
+    {
+      name: "効果量が負なら例外",
+      application: createApplication({ magnitude: -1 }),
+      expected: "効果量は正の数である必要があります",
+    },
+    {
+      name: "効果量が NaN なら例外",
       application: createApplication({ magnitude: Number.NaN }),
+      expected: "効果量は正の数である必要があります",
     },
     {
-      name: "継続ターンが 0",
+      name: "ターン無し効果でも効果量が 0 なら例外",
+      application: createApplication({ magnitude: 0, duration: permanent }),
+      expected: "効果量は正の数である必要があります",
+    },
+    {
+      name: "継続ターンが 0 なら例外",
       application: createApplication({ duration: turns(0) }),
+      expected: "継続ターンは 1 以上の整数である必要があります",
     },
     {
-      name: "継続ターンが整数でない",
+      name: "継続ターンが整数でなければ例外",
       application: createApplication({ duration: turns(1.5) }),
+      expected: "継続ターンは 1 以上の整数である必要があります",
     },
-  ])("$name なら例外を投げる", ({ application }) => {
-    expect(() =>
-      applyPowerUp(createEmptyPowerUpState(), application),
-    ).toThrow();
+  ])("$name", ({ application, expected }) => {
+    expect(() => applyPowerUp(createEmptyPowerUpState(), application)).toThrow(
+      expected,
+    );
   });
 });
 
