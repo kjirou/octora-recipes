@@ -16,10 +16,12 @@ import {
   createEmptyStatusEffectState,
   elapseStatusEffectTurn,
   findStatusEffectPool,
+  getDamageUpMagnitude,
   getStatusEffectMagnitude,
   getStatusEffectMagnitudeCap,
   getStatusEffectRemainingTurns,
   isSameStatusEffectSource,
+  listApplicableDamageUpKinds,
   removePermanentStatusEffect,
 } from "./statusEffect";
 
@@ -59,6 +61,38 @@ const lueckBlasterMine: StatusEffectSource = {
 const rocbouquetTemptation: StatusEffectSource = {
   characterId: "rocbouquet",
   abilityId: "temptationEx",
+};
+const augusteDeepGreenEnsemble: StatusEffectSource = {
+  characterId: "augusteEx",
+  abilityId: "deepGreenEnsembleTorch",
+};
+const violaLikeRagingFire: StatusEffectSource = {
+  characterId: "violaEx",
+  abilityId: "likeRagingFire",
+};
+const violaHeirOfDivineWeapon: StatusEffectSource = {
+  characterId: "violaEx",
+  abilityId: "heirOfDivineWeapon",
+};
+const soniaSaltarello: StatusEffectSource = {
+  characterId: "soniaEx",
+  abilityId: "braveAxeSaltarello",
+};
+const molussoLiven: StatusEffectSource = {
+  characterId: "molussoEx",
+  abilityId: "liven",
+};
+const crimsonCondemnerAura: StatusEffectSource = {
+  characterId: "crimsonCondemner",
+  abilityId: "auraOfRedHeartAll5",
+};
+const rocbouquetSingleMindedLove: StatusEffectSource = {
+  characterId: "rocbouquet",
+  abilityId: "singleMindedLove",
+};
+const sincerityPouch: StatusEffectSource = {
+  characterId: "x",
+  abilityId: "sincerityPouch",
 };
 
 /** テスト用に、省略可能な項目を埋めた付与内容を作る。 */
@@ -414,6 +448,501 @@ describe("getStatusEffectMagnitude", () => {
     },
   ])("$name", ({ args, expected }) => {
     expect(getStatusEffectMagnitude(...args)).toBe(expected);
+  });
+});
+
+describe("listApplicableDamageUpKinds", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof listApplicableDamageUpKinds>;
+    expected: ReturnType<typeof listApplicableDamageUpKinds>;
+  }>([
+    {
+      name: "条件が無い剣攻撃には、全攻撃・全物理・剣が掛かる",
+      args: ["sword", []],
+      expected: ["damageUp", "physicalDamageUp", "swordDamageUp"],
+    },
+    {
+      name: "弱点を突いたクリティカルの火攻撃には、全攻撃・全属性・火と、弱点時・クリティカル時が掛かる",
+      args: ["fire", ["weakness", "critical"]],
+      expected: [
+        "criticalDamageUp",
+        "damageUp",
+        "elementalDamageUp",
+        "fireDamageUp",
+        "weaknessDamageUp",
+      ],
+    },
+    {
+      name: "ブレイク中の無属性攻撃には、全攻撃とブレイク中だけが掛かる",
+      args: ["nonElemental", ["break"]],
+      expected: ["breakDamageUp", "damageUp"],
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(listApplicableDamageUpKinds(...args)).toStrictEqual(expected);
+  });
+});
+
+describe("getDamageUpMagnitude", () => {
+  /** 剣士 ヴィオラEX「神器の継承者」: サポアビと装備性能による物理ダメージアップの上限が 50% */
+  const heirOfDivineWeaponCaps: StatusEffectMagnitudeCapApplication[] = (
+    [
+      "axeDamageUp",
+      "bookDamageUp",
+      "bowDamageUp",
+      "daggerDamageUp",
+      "fanDamageUp",
+      "spearDamageUp",
+      "staffDamageUp",
+      "swordDamageUp",
+    ] as const
+  ).map((kind) =>
+    createCapApplication({
+      slot: "supportAbility",
+      kind,
+      cap: 50,
+      duration: permanent,
+      source: violaHeirOfDivineWeapon,
+    }),
+  );
+
+  test.each<{
+    name: string;
+    args: Parameters<typeof getDamageUpMagnitude>;
+    expected: ReturnType<typeof getDamageUpMagnitude>;
+  }>([
+    {
+      name: "深碧のアンサンブル 灯火の氷属性ダメージアップ 15% は氷攻撃に掛かる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "iceDamageUp",
+            magnitude: 15,
+            source: augusteDeepGreenEnsemble,
+          }),
+        ]),
+        "battleAbility",
+        "ice",
+        [],
+      ],
+      expected: 15,
+    },
+    {
+      name: "氷属性ダメージアップは火攻撃には掛からない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "iceDamageUp",
+            magnitude: 15,
+            source: augusteDeepGreenEnsemble,
+          }),
+        ]),
+        "battleAbility",
+        "fire",
+        [],
+      ],
+      expected: 0,
+    },
+    {
+      name: "烈火の如くの物理ダメージアップ 30% は剣攻撃に掛かる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "physicalDamageUp",
+            magnitude: 30,
+            duration: turns(3),
+            source: violaLikeRagingFire,
+          }),
+        ]),
+        "battleAbility",
+        "sword",
+        [],
+      ],
+      expected: 30,
+    },
+    {
+      name: "物理ダメージアップは属性攻撃には掛からない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "physicalDamageUp",
+            magnitude: 30,
+            source: violaLikeRagingFire,
+          }),
+        ]),
+        "battleAbility",
+        "fire",
+        [],
+      ],
+      expected: 0,
+    },
+    {
+      name: "一途な想いのターン無しの属性ダメージアップ 20% は光攻撃に掛かる",
+      args: [
+        applyAll([
+          createApplication({
+            slot: "supportAbility",
+            kind: "elementalDamageUp",
+            magnitude: 20,
+            duration: permanent,
+            source: rocbouquetSingleMindedLove,
+          }),
+        ]),
+        "supportAbility",
+        "light",
+        [],
+      ],
+      expected: 20,
+    },
+    {
+      name: "サルタレロの斧 20% と烈火の如くの物理 30% は、斧攻撃に対して合算してから 30% で止まる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "axeDamageUp",
+            magnitude: 20,
+            source: soniaSaltarello,
+          }),
+          createApplication({
+            kind: "physicalDamageUp",
+            magnitude: 30,
+            duration: turns(3),
+            source: violaLikeRagingFire,
+          }),
+        ]),
+        "battleAbility",
+        "axe",
+        [],
+      ],
+      expected: 30,
+    },
+    {
+      name: "サルタレロの斧 10% と盛りあげるの 15% は、斧攻撃に対して合算して 25% になる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "axeDamageUp",
+            magnitude: 10,
+            source: soniaSaltarello,
+          }),
+          createApplication({
+            kind: "damageUp",
+            magnitude: 15,
+            duration: turns(3),
+            source: molussoLiven,
+          }),
+        ]),
+        "battleAbility",
+        "axe",
+        [],
+      ],
+      expected: 25,
+    },
+    {
+      name: "赤心のオーラの物理・属性ダメージアップは、全物理と全属性の 2 つとして属性攻撃にも掛かる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "physicalDamageUp",
+            magnitude: 30,
+            source: crimsonCondemnerAura,
+          }),
+          createApplication({
+            kind: "elementalDamageUp",
+            magnitude: 30,
+            source: crimsonCondemnerAura,
+          }),
+        ]),
+        "battleAbility",
+        "fire",
+        [],
+      ],
+      expected: 30,
+    },
+    {
+      name: "盛りあげるのダメージアップ 15% は無属性攻撃にも掛かる",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "damageUp",
+            magnitude: 15,
+            duration: turns(3),
+            source: molussoLiven,
+          }),
+        ]),
+        "battleAbility",
+        "nonElemental",
+        [],
+      ],
+      expected: 15,
+    },
+    {
+      name: "無属性攻撃には武器種別・全物理・全属性のダメージアップは掛からない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "swordDamageUp",
+            magnitude: 10,
+            source: sourceA,
+          }),
+          createApplication({
+            kind: "physicalDamageUp",
+            magnitude: 10,
+            source: crimsonCondemnerAura,
+          }),
+          createApplication({
+            kind: "elementalDamageUp",
+            magnitude: 10,
+            source: crimsonCondemnerAura,
+          }),
+        ]),
+        "battleAbility",
+        "nonElemental",
+        [],
+      ],
+      expected: 0,
+    },
+    {
+      name: "剣 15% + クリティカル時 15% は、剣攻撃でクリティカルなら 30%",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "swordDamageUp",
+            magnitude: 15,
+            source: sourceA,
+          }),
+          createApplication({
+            kind: "criticalDamageUp",
+            magnitude: 15,
+            source: sourceB,
+          }),
+        ]),
+        "battleAbility",
+        "sword",
+        ["critical"],
+      ],
+      expected: 30,
+    },
+    {
+      name: "剣 15% + クリティカル時 15% は、剣攻撃でクリティカルでなければ 15%",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "swordDamageUp",
+            magnitude: 15,
+            source: sourceA,
+          }),
+          createApplication({
+            kind: "criticalDamageUp",
+            magnitude: 15,
+            source: sourceB,
+          }),
+        ]),
+        "battleAbility",
+        "sword",
+        [],
+      ],
+      expected: 15,
+    },
+    {
+      name: "ブレイク中 20% + クリティカル時 20% + 弓 30% は、条件をすべて満たしても 30%",
+      args: [
+        applyAll([
+          createApplication({
+            slot: "supportAbility",
+            kind: "breakDamageUp",
+            magnitude: 20,
+            duration: permanent,
+            source: permanentSource1,
+          }),
+          createApplication({
+            slot: "supportAbility",
+            kind: "criticalDamageUp",
+            magnitude: 20,
+            duration: permanent,
+            source: permanentSource2,
+          }),
+          createApplication({
+            slot: "supportAbility",
+            kind: "bowDamageUp",
+            magnitude: 30,
+            duration: permanent,
+            source: sourceA,
+          }),
+        ]),
+        "supportAbility",
+        "bow",
+        ["break", "critical"],
+      ],
+      expected: 30,
+    },
+    {
+      name: "光属性で計算して火弱点を突いた場合、光・全属性・弱点時を合算し、火は合算しない",
+      args: [
+        applyAll([
+          createApplication({
+            slot: "supportAbility",
+            kind: "lightDamageUp",
+            magnitude: 5,
+            duration: permanent,
+            source: permanentSource1,
+          }),
+          createApplication({
+            slot: "supportAbility",
+            kind: "elementalDamageUp",
+            magnitude: 10,
+            duration: permanent,
+            source: rocbouquetSingleMindedLove,
+          }),
+          createApplication({
+            slot: "supportAbility",
+            kind: "weaknessDamageUp",
+            magnitude: 10,
+            duration: permanent,
+            source: sincerityPouch,
+          }),
+          createApplication({
+            slot: "supportAbility",
+            kind: "fireDamageUp",
+            magnitude: 10,
+            duration: permanent,
+            source: permanentSource2,
+          }),
+        ]),
+        "supportAbility",
+        "light",
+        ["weakness"],
+      ],
+      expected: 25,
+    },
+    {
+      name: "枠が違うダメージアップは合算しない",
+      args: [
+        applyAll([
+          createApplication({
+            kind: "swordDamageUp",
+            magnitude: 20,
+            source: sourceA,
+          }),
+          createApplication({
+            slot: "supportAbility",
+            kind: "swordDamageUp",
+            magnitude: 20,
+            duration: permanent,
+            source: sourceB,
+          }),
+        ]),
+        "battleAbility",
+        "sword",
+        [],
+      ],
+      expected: 20,
+    },
+    {
+      name: "神器の継承者があれば、サポアビ枠の剣攻撃への合算は 50% まで反映される",
+      args: [
+        applyAllCaps(
+          heirOfDivineWeaponCaps,
+          applyAll([
+            createApplication({
+              slot: "supportAbility",
+              kind: "physicalDamageUp",
+              magnitude: 30,
+              duration: permanent,
+              source: permanentSource1,
+            }),
+            createApplication({
+              slot: "supportAbility",
+              kind: "swordDamageUp",
+              magnitude: 30,
+              duration: permanent,
+              source: permanentSource2,
+            }),
+          ]),
+        ),
+        "supportAbility",
+        "sword",
+        [],
+      ],
+      expected: 50,
+    },
+    {
+      name: "神器の継承者があっても、属性攻撃の上限は 30% のまま",
+      args: [
+        applyAllCaps(
+          heirOfDivineWeaponCaps,
+          applyAll([
+            createApplication({
+              slot: "supportAbility",
+              kind: "damageUp",
+              magnitude: 40,
+              duration: permanent,
+              source: permanentSource1,
+            }),
+          ]),
+        ),
+        "supportAbility",
+        "fire",
+        [],
+      ],
+      expected: 30,
+    },
+    {
+      name: "剣攻撃ダメージアップの上限引き上げは、槍攻撃には掛からない",
+      args: [
+        applyAllCaps(
+          [
+            createCapApplication({
+              slot: "supportAbility",
+              kind: "swordDamageUp",
+              cap: 50,
+              duration: permanent,
+            }),
+          ],
+          applyAll([
+            createApplication({
+              slot: "supportAbility",
+              kind: "damageUp",
+              magnitude: 40,
+              duration: permanent,
+              source: permanentSource1,
+            }),
+          ]),
+        ),
+        "supportAbility",
+        "spear",
+        [],
+      ],
+      expected: 30,
+    },
+    {
+      name: "無属性攻撃の上限は引き上げられない",
+      args: [
+        applyAllCaps(
+          heirOfDivineWeaponCaps,
+          applyAll([
+            createApplication({
+              slot: "supportAbility",
+              kind: "damageUp",
+              magnitude: 40,
+              duration: permanent,
+              source: permanentSource1,
+            }),
+          ]),
+        ),
+        "supportAbility",
+        "nonElemental",
+        [],
+      ],
+      expected: 30,
+    },
+    {
+      name: "かかっていなければ 0",
+      args: [createEmptyStatusEffectState(), "battleAbility", "sword", []],
+      expected: 0,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(getDamageUpMagnitude(...args)).toBe(expected);
   });
 });
 
@@ -981,6 +1510,18 @@ describe("applyStatusEffectMagnitudeCap", () => {
         application: createCapApplication({ duration: turns(0) }),
         expected: "継続ターンは 1 以上の整数である必要があります",
       },
+      {
+        name: "物理ダメージアップ（全物理）を指定すると例外",
+        application: createCapApplication({ kind: "physicalDamageUp" }),
+        expected:
+          "ダメージアップ系の上限引き上げは武器種別・属性別の種別にのみ指定できます: kind=physicalDamageUp",
+      },
+      {
+        name: "弱点時ダメージアップを指定すると例外",
+        application: createCapApplication({ kind: "weaknessDamageUp" }),
+        expected:
+          "ダメージアップ系の上限引き上げは武器種別・属性別の種別にのみ指定できます: kind=weaknessDamageUp",
+      },
     ])("$name", ({ application, expected }) => {
       expect(() =>
         applyStatusEffectMagnitudeCap(
@@ -1427,5 +1968,41 @@ describe("ターンをまたいだシナリオ", () => {
         "physicalDefenseDown",
       ),
     ).toBe(30);
+  });
+});
+
+describe("ダメージアップのターンをまたいだシナリオ", () => {
+  it("盛りあげる 15%（3 ターン）と深碧のアンサンブル 灯火 15%（2 ターン）は種別ごとにターンを管理し、氷攻撃は 1〜2 ターン目 30%、3 ターン目 15%、4 ターン目 0% になる", () => {
+    const readIce = (current: StatusEffectState): number =>
+      getDamageUpMagnitude(current, "battleAbility", "ice", []);
+
+    // 1 ターン目
+    let state = applyAll([
+      createApplication({
+        kind: "damageUp",
+        magnitude: 15,
+        duration: turns(3),
+        source: molussoLiven,
+      }),
+      createApplication({
+        kind: "iceDamageUp",
+        magnitude: 15,
+        duration: turns(2),
+        source: augusteDeepGreenEnsemble,
+      }),
+    ]);
+    expect(readIce(state)).toBe(30);
+    state = elapseStatusEffectTurn(state);
+
+    // 2 ターン目
+    expect(readIce(state)).toBe(30);
+    state = elapseStatusEffectTurn(state);
+
+    // 3 ターン目: 氷属性ダメージアップが切れ、全攻撃のダメージアップだけが残る
+    expect(readIce(state)).toBe(15);
+    state = elapseStatusEffectTurn(state);
+
+    // 4 ターン目
+    expect(readIce(state)).toBe(0);
   });
 });

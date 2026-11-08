@@ -30,6 +30,17 @@ export type Element = "dark" | "fire" | "ice" | "light" | "lightning" | "wind";
 /** 攻撃種別（14 種）。弱点・シールド・耐性アップ / ダウンの単位になる。 */
 export type AttackType = Element | Weapon;
 
+/**
+ * ダメージ計算に使う攻撃種別。{@link AttackType} の 14 種に無属性を加えたもの。
+ *
+ * 1 回の攻撃のダメージ計算に使う攻撃種別は必ず 1 つ。「どの弱点を突けるか」とは別のレイヤーで、
+ * 複数の弱点を突ける攻撃でもダメージ計算の攻撃種別は 1 つに明示される
+ * （例: 最終皇帝(女)「クリムゾンフレア」は火弱点を突けるが、ダメージ計算は光属性）。
+ *
+ * - `nonElemental` … 無属性（例: リルム「スタープリズム」）。弱点・シールドの単位にはならない
+ */
+export type DamageAttackType = AttackType | "nonElemental";
+
 // =============================================================================
 // 2. マスターデータ
 // =============================================================================
@@ -76,8 +87,8 @@ export type BattleConditionCategory =
 // 効果量（%）は「枠 × 種別」ごとにまとめて管理され、同じまとまりの中で加算される。
 // 継続ターンも同じまとまりの中で合算される。詳細なルールは lib/domain/statusEffect.ts を参照。
 //
-// 現時点の実装対象はパラメーター系（物攻・属攻・物防・属防・速度・会心）のアップ / ダウンのみ。
-// 耐性系・ダメージアップ系などは今後の検討事項。威力アップは別の概念として PowerUp* で扱う。
+// 現時点の実装対象は、パラメーター系（物攻・属攻・物防・属防・速度・会心）のアップ / ダウンと
+// ダメージアップ系。耐性系などは今後の検討事項。威力アップは別の概念として PowerUp* で扱う。
 
 /**
  * ステータス効果の種別。アップ / ダウンを展開した 1 つの列挙として扱う。
@@ -87,6 +98,10 @@ export type BattleConditionCategory =
  * 各種別の属性（バフかデバフか、表示名）は {@link StatusEffectKindDefinition} をマスターデータとして持つ。
  */
 export type StatusEffectKind =
+  DamageUpStatusEffectKind | ParameterStatusEffectKind;
+
+/** パラメーター系（物攻・属攻・物防・属防・速度・会心）の種別。 */
+export type ParameterStatusEffectKind =
   | "criticalRateDown"
   | "criticalRateUp"
   | "elementalAttackDown"
@@ -99,6 +114,75 @@ export type StatusEffectKind =
   | "physicalDefenseUp"
   | "speedDown"
   | "speedUp";
+
+/**
+ * ダメージアップ系の種別。すべてバフ（対になるデバフが無い）。
+ *
+ * - 武器種別 8 種・属性別 6 種（例: `swordDamageUp` = 剣攻撃ダメージアップ、`iceDamageUp` = 氷属性ダメージアップ）
+ * - `physicalDamageUp` … 全物理（「物理ダメージアップ」）
+ * - `elementalDamageUp` … 全属性（「属性ダメージアップ」）
+ * - `damageUp` … 全攻撃（説明文で単に「ダメージアップ」と書かれるもの。例: 踊子 モルルッソEX「盛りあげる」）。
+ *   「物理・属性ダメージアップ」（例: 緋き断罪者「赤心のオーラ（全体）V」）は、
+ *   `physicalDamageUp` と `elementalDamageUp` の 2 つを付与するものとして扱い、これには含めない
+ * - 条件付き … `weaknessDamageUp`（弱点を突いた時）、`criticalDamageUp`（クリティカル時）、
+ *   `breakDamageUp`（ブレイク中）
+ *
+ * 攻撃時にどの種別が掛かるかは {@link DamageUpKindDefinition} をマスターデータとして持つ。
+ * 効果量の上限は種別ごとではなく「枠 × ダメージ計算の攻撃種別」ごとに掛かる。
+ * 詳細なルールは lib/domain/statusEffect.ts を参照。
+ */
+export type DamageUpStatusEffectKind =
+  | "axeDamageUp"
+  | "bookDamageUp"
+  | "bowDamageUp"
+  | "breakDamageUp"
+  | "criticalDamageUp"
+  | "daggerDamageUp"
+  | "damageUp"
+  | "darkDamageUp"
+  | "elementalDamageUp"
+  | "fanDamageUp"
+  | "fireDamageUp"
+  | "iceDamageUp"
+  | "lightDamageUp"
+  | "lightningDamageUp"
+  | "physicalDamageUp"
+  | "spearDamageUp"
+  | "staffDamageUp"
+  | "swordDamageUp"
+  | "weaknessDamageUp"
+  | "windDamageUp";
+
+/**
+ * ダメージアップが掛かる攻撃種別。
+ *
+ * - `any` … 全攻撃。無属性攻撃にも掛かる
+ * - `attackType` … 特定の武器種・属性の攻撃
+ * - `elemental` … 全属性の攻撃
+ * - `physical` … 全物理（全武器種）の攻撃
+ */
+export type DamageUpTarget =
+  | { type: "any" }
+  | { type: "attackType"; attackType: AttackType }
+  | { type: "elemental" }
+  | { type: "physical" };
+
+/**
+ * ダメージアップの発動条件。攻撃時に成立したものだけが合算・上限の対象になる。
+ *
+ * - `break` … 敵がブレイク中
+ * - `critical` … クリティカル時
+ * - `weakness` … 敵の弱点を突いた時。ダメージ計算の攻撃種別と、弱点を突いた攻撃種別は異なってもよい
+ */
+export type DamageUpCondition = "break" | "critical" | "weakness";
+
+/** ダメージアップ系の種別の、攻撃時の合算に使うマスターデータ 1 件。 */
+export type DamageUpKindDefinition = {
+  kind: DamageUpStatusEffectKind;
+  target: DamageUpTarget;
+  /** 発動条件。無条件なら null。 */
+  condition: DamageUpCondition | null;
+};
 
 /** バフ（強化効果）かデバフ（弱体効果）か。種別の属性であり、種別から決まる。 */
 export type StatusEffectPolarity = "buff" | "debuff";
@@ -211,6 +295,12 @@ export type StatusEffectPool = {
  * （リュック「調合：ブラスターマイン」3 ターン、七英雄ロックブーケ「テンプテーション EX」2 ターン）
  * のように、「枠 × 種別」を指定して上限値を変える。
  * 「物攻・属攻アップ」のように複数の種別にかかる場合は、種別ごとに 1 件ずつ付与する。
+ *
+ * ダメージアップ系の上限は「枠 × ダメージ計算の攻撃種別」ごとに掛かるため、武器種別・属性別の
+ * 種別（`swordDamageUp` など）を指定し、その攻撃種別の攻撃に対する合算の上限を表す。
+ * 「サポアビと装備性能による物理ダメージアップの上限が 50%」（剣士 ヴィオラEX「神器の継承者」）は
+ * 8 武器種の種別に 1 件ずつ、「剣攻撃ダメージアップの上限が 50%」は `swordDamageUp` に 1 件付与する。
+ * 全物理・全属性・全攻撃・条件付きの種別は指定できない。
  */
 export type StatusEffectMagnitudeCapApplication = {
   slot: StatusEffectSlot;
