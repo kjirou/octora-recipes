@@ -122,12 +122,6 @@ describe("RESISTANCE_KIND_DEFINITIONS", () => {
       });
     }
   });
-
-  it("全攻撃を対象にする定義は無い", () => {
-    for (const { target } of Object.values(RESISTANCE_KIND_DEFINITIONS)) {
-      expect(target.type).not.toBe("any");
-    }
-  });
 });
 
 describe("ATTACK_TYPE_RESISTANCE_UP_KINDS", () => {

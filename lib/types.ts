@@ -296,11 +296,11 @@ export type ResistanceStatusEffectKind =
 /**
  * 耐性系の種別の、攻撃を受けた時の合算に使うマスターデータ 1 件。
  *
- * `target` は受ける攻撃の攻撃種別を表す。全攻撃（`any`）を対象にする種別は無い。
+ * `target` は受ける攻撃の攻撃種別を表す。全攻撃（`any`）を対象にする種別は無いため、型で除外している。
  */
 export type ResistanceKindDefinition = {
   kind: ResistanceStatusEffectKind;
-  target: StatusEffectAttackTarget;
+  target: Exclude<StatusEffectAttackTarget, { type: "any" }>;
 };
 
 /** バフ（強化効果）かデバフ（弱体効果）か。種別の属性であり、種別から決まる。 */
