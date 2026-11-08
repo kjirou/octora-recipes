@@ -2,16 +2,22 @@ import { describe, expect, it, test } from "vitest";
 
 import {
   ATTACK_TYPE_DAMAGE_UP_KINDS,
+  ATTACK_TYPE_RESISTANCE_DOWN_KINDS,
+  ATTACK_TYPE_RESISTANCE_UP_KINDS,
   DAMAGE_CAP_UP_KIND_DEFINITIONS,
   DAMAGE_UP_KIND_DEFINITIONS,
+  RESISTANCE_KIND_DEFINITIONS,
   STATUS_EFFECT_KIND_DEFINITIONS,
   getAttackTypeDamageUpKind,
+  getAttackTypeResistanceKind,
   getStatusEffectKindDefinition,
   getStatusEffectPolarity,
   isDamageCapUpStatusEffectKind,
   isDamageUpStatusEffectKind,
+  isResistanceStatusEffectKind,
   listDamageCapUpKindDefinitions,
   listDamageUpKindDefinitions,
+  listResistanceKindDefinitions,
   listStatusEffectKinds,
 } from "./statusEffectKind";
 
@@ -99,11 +105,84 @@ describe("DAMAGE_CAP_UP_KIND_DEFINITIONS", () => {
   });
 });
 
+describe("RESISTANCE_KIND_DEFINITIONS", () => {
+  it("キーと定義内の kind が一致している", () => {
+    for (const [key, definition] of Object.entries(
+      RESISTANCE_KIND_DEFINITIONS,
+    )) {
+      expect(definition.kind).toBe(key);
+    }
+  });
+
+  it("耐性系の種別はすべて、効果量が % で上限 30 の種別", () => {
+    for (const { kind } of Object.values(RESISTANCE_KIND_DEFINITIONS)) {
+      expect(getStatusEffectKindDefinition(kind)).toMatchObject({
+        magnitudeUnit: "percent",
+        defaultMagnitudeCap: 30,
+      });
+    }
+  });
+});
+
+describe("ATTACK_TYPE_RESISTANCE_UP_KINDS", () => {
+  it("対応表の種別は、定義上その攻撃種別を対象にする耐性アップ", () => {
+    for (const [attackType, kind] of Object.entries(
+      ATTACK_TYPE_RESISTANCE_UP_KINDS,
+    )) {
+      expect(RESISTANCE_KIND_DEFINITIONS[kind].target).toStrictEqual({
+        type: "attackType",
+        attackType,
+      });
+      expect(getStatusEffectPolarity(kind)).toBe("buff");
+    }
+  });
+
+  it("攻撃種別を対象にする耐性アップの定義は、すべて対応表に含まれる", () => {
+    const attackTypeKinds = listResistanceKindDefinitions()
+      .filter(
+        ({ kind, target }) =>
+          target.type === "attackType" &&
+          getStatusEffectPolarity(kind) === "buff",
+      )
+      .map(({ kind }) => kind);
+    expect(Object.values(ATTACK_TYPE_RESISTANCE_UP_KINDS).sort()).toStrictEqual(
+      attackTypeKinds,
+    );
+  });
+});
+
+describe("ATTACK_TYPE_RESISTANCE_DOWN_KINDS", () => {
+  it("対応表の種別は、定義上その攻撃種別を対象にする耐性ダウン", () => {
+    for (const [attackType, kind] of Object.entries(
+      ATTACK_TYPE_RESISTANCE_DOWN_KINDS,
+    )) {
+      expect(RESISTANCE_KIND_DEFINITIONS[kind].target).toStrictEqual({
+        type: "attackType",
+        attackType,
+      });
+      expect(getStatusEffectPolarity(kind)).toBe("debuff");
+    }
+  });
+
+  it("攻撃種別を対象にする耐性ダウンの定義は、すべて対応表に含まれる", () => {
+    const attackTypeKinds = listResistanceKindDefinitions()
+      .filter(
+        ({ kind, target }) =>
+          target.type === "attackType" &&
+          getStatusEffectPolarity(kind) === "debuff",
+      )
+      .map(({ kind }) => kind);
+    expect(
+      Object.values(ATTACK_TYPE_RESISTANCE_DOWN_KINDS).sort(),
+    ).toStrictEqual(attackTypeKinds);
+  });
+});
+
 describe("listStatusEffectKinds", () => {
   it("すべての種別を ASCII 順で返す", () => {
     const kinds = listStatusEffectKinds();
     expect(kinds).toStrictEqual([...kinds].sort());
-    expect(kinds).toHaveLength(49);
+    expect(kinds).toHaveLength(81);
   });
 });
 
@@ -157,6 +236,28 @@ describe("getStatusEffectKindDefinition", () => {
         defaultMagnitudeCap: null,
       },
     },
+    {
+      name: "槍耐性ダウンの定義を返す",
+      args: ["spearResistanceDown"],
+      expected: {
+        kind: "spearResistanceDown",
+        name: "槍耐性ダウン",
+        polarity: "debuff",
+        magnitudeUnit: "percent",
+        defaultMagnitudeCap: 30,
+      },
+    },
+    {
+      name: "属性耐性アップの定義を返す",
+      args: ["elementalResistanceUp"],
+      expected: {
+        kind: "elementalResistanceUp",
+        name: "属性耐性アップ",
+        polarity: "buff",
+        magnitudeUnit: "percent",
+        defaultMagnitudeCap: 30,
+      },
+    },
   ])("$name", ({ args, expected }) => {
     expect(getStatusEffectKindDefinition(...args)).toStrictEqual(expected);
   });
@@ -208,6 +309,16 @@ describe("getStatusEffectPolarity", () => {
     },
     { name: "速度ダウンはデバフ", args: ["speedDown"], expected: "debuff" },
     { name: "速度アップはバフ", args: ["speedUp"], expected: "buff" },
+    {
+      name: "物理耐性ダウンはデバフ",
+      args: ["physicalResistanceDown"],
+      expected: "debuff",
+    },
+    {
+      name: "氷耐性アップはバフ",
+      args: ["iceResistanceUp"],
+      expected: "buff",
+    },
   ])("$name", ({ args, expected }) => {
     expect(getStatusEffectPolarity(...args)).toBe(expected);
   });
@@ -328,5 +439,82 @@ describe("getAttackTypeDamageUpKind", () => {
     },
   ])("$name", ({ args, expected }) => {
     expect(getAttackTypeDamageUpKind(...args)).toBe(expected);
+  });
+});
+
+describe("isResistanceStatusEffectKind", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof isResistanceStatusEffectKind>;
+    expected: ReturnType<typeof isResistanceStatusEffectKind>;
+  }>([
+    {
+      name: "槍耐性ダウンは耐性系",
+      args: ["spearResistanceDown"],
+      expected: true,
+    },
+    {
+      name: "属性耐性アップは耐性系",
+      args: ["elementalResistanceUp"],
+      expected: true,
+    },
+    {
+      name: "物防ダウンは耐性系ではない",
+      args: ["physicalDefenseDown"],
+      expected: false,
+    },
+    {
+      name: "槍攻撃ダメージアップは耐性系ではない",
+      args: ["spearDamageUp"],
+      expected: false,
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(isResistanceStatusEffectKind(...args)).toBe(expected);
+  });
+});
+
+describe("listResistanceKindDefinitions", () => {
+  it("耐性アップ 16 種・耐性ダウン 16 種の定義を ASCII 順で返す", () => {
+    const kinds = listResistanceKindDefinitions().map(
+      (definition) => definition.kind,
+    );
+    expect(kinds).toStrictEqual([...kinds].sort());
+    expect(
+      kinds.filter((kind) => getStatusEffectPolarity(kind) === "buff"),
+    ).toHaveLength(16);
+    expect(
+      kinds.filter((kind) => getStatusEffectPolarity(kind) === "debuff"),
+    ).toHaveLength(16);
+  });
+});
+
+describe("getAttackTypeResistanceKind", () => {
+  test.each<{
+    name: string;
+    args: Parameters<typeof getAttackTypeResistanceKind>;
+    expected: ReturnType<typeof getAttackTypeResistanceKind>;
+  }>([
+    {
+      name: "槍とバフは槍耐性アップ",
+      args: ["spear", "buff"],
+      expected: "spearResistanceUp",
+    },
+    {
+      name: "槍とデバフは槍耐性ダウン",
+      args: ["spear", "debuff"],
+      expected: "spearResistanceDown",
+    },
+    {
+      name: "闇とデバフは闇耐性ダウン",
+      args: ["dark", "debuff"],
+      expected: "darkResistanceDown",
+    },
+    {
+      name: "光とバフは光耐性アップ",
+      args: ["light", "buff"],
+      expected: "lightResistanceUp",
+    },
+  ])("$name", ({ args, expected }) => {
+    expect(getAttackTypeResistanceKind(...args)).toBe(expected);
   });
 });

@@ -89,7 +89,7 @@ export type BattleConditionCategory =
 // 継続ターンも同じまとまりの中で合算される。詳細なルールは lib/domain/statusEffect.ts を参照。
 //
 // 現時点の実装対象は、パラメーター系（物攻・属攻・物防・属防・速度・会心）のアップ / ダウンと
-// ダメージアップ系、ダメージ上限アップ系。耐性系などは今後の検討事項。威力アップは別の概念として PowerUp* で扱う。
+// ダメージアップ系、ダメージ上限アップ系、耐性系。威力アップは別の概念として PowerUp* で扱う。
 
 /**
  * ステータス効果の種別。アップ / ダウンを展開した 1 つの列挙として扱う。
@@ -102,7 +102,9 @@ export type BattleConditionCategory =
 export type StatusEffectKind =
   | DamageCapUpStatusEffectKind
   | DamageUpStatusEffectKind
-  | ParameterStatusEffectKind;
+  | ParameterStatusEffectKind
+  | ResistanceDownStatusEffectKind
+  | ResistanceUpStatusEffectKind;
 
 /** パラメーター系（物攻・属攻・物防・属防・速度・会心）の種別。 */
 export type ParameterStatusEffectKind =
@@ -158,7 +160,8 @@ export type DamageUpStatusEffectKind =
   | "windDamageUp";
 
 /**
- * ダメージアップ系・ダメージ上限アップ系の種別が掛かる攻撃種別。
+ * ダメージアップ系・ダメージ上限アップ系・耐性系の種別が掛かる攻撃種別。
+ * 耐性系では、受ける攻撃の攻撃種別を表す。
  *
  * - `any` … 全攻撃。無属性攻撃にも掛かる
  * - `attackType` … 特定の武器種・属性の攻撃
@@ -230,6 +233,76 @@ export type DamageCapUpKindDefinition = {
   target: StatusEffectAttackTarget;
 };
 
+/**
+ * 耐性アップ系の種別。すべてバフ。受ける攻撃のダメージを減らす。
+ *
+ * - 武器種別 8 種・属性別 6 種（例: `swordResistanceUp` = 剣耐性アップ、`iceResistanceUp` = 氷耐性アップ）。
+ *   複数の攻撃種別を列挙するもの（耐性ダウンの例: 狂騒の愚者「満ちる叛意 灯火」の「槍・斧・闇耐性ダウン」）は、
+ *   攻撃種別ごとに 1 つずつ別のステータス効果として付与する
+ * - `physicalResistanceUp` … 全物理（「物理耐性アップ」）
+ * - `elementalResistanceUp` … 全属性（「属性耐性アップ」。例: リュック「調合：バオール」）
+ *
+ * ダメージアップ系の全攻撃・条件付きに相当する種別は無い。
+ * 攻撃を受けた時にどの種別が掛かるかは {@link ResistanceKindDefinition} をマスターデータとして持つ。
+ * 効果量の上限は種別ごとではなく「枠 × 受ける攻撃のダメージ計算の攻撃種別」ごとに掛かる。
+ * 詳細なルールは lib/domain/statusEffect.ts を参照。
+ */
+export type ResistanceUpStatusEffectKind =
+  | "axeResistanceUp"
+  | "bookResistanceUp"
+  | "bowResistanceUp"
+  | "daggerResistanceUp"
+  | "darkResistanceUp"
+  | "elementalResistanceUp"
+  | "fanResistanceUp"
+  | "fireResistanceUp"
+  | "iceResistanceUp"
+  | "lightResistanceUp"
+  | "lightningResistanceUp"
+  | "physicalResistanceUp"
+  | "spearResistanceUp"
+  | "staffResistanceUp"
+  | "swordResistanceUp"
+  | "windResistanceUp";
+
+/**
+ * 耐性ダウン系の種別。すべてデバフ。受ける攻撃のダメージを増やす。
+ *
+ * 構成は耐性アップ系（{@link ResistanceUpStatusEffectKind}）と同じ 16 種
+ * （例: `spearResistanceDown` = 槍耐性ダウン、`physicalResistanceDown` = 物理耐性ダウン）。
+ */
+export type ResistanceDownStatusEffectKind =
+  | "axeResistanceDown"
+  | "bookResistanceDown"
+  | "bowResistanceDown"
+  | "daggerResistanceDown"
+  | "darkResistanceDown"
+  | "elementalResistanceDown"
+  | "fanResistanceDown"
+  | "fireResistanceDown"
+  | "iceResistanceDown"
+  | "lightResistanceDown"
+  | "lightningResistanceDown"
+  | "physicalResistanceDown"
+  | "spearResistanceDown"
+  | "staffResistanceDown"
+  | "swordResistanceDown"
+  | "windResistanceDown";
+
+/** 耐性系（耐性アップ / 耐性ダウン）の種別。 */
+export type ResistanceStatusEffectKind =
+  ResistanceDownStatusEffectKind | ResistanceUpStatusEffectKind;
+
+/**
+ * 耐性系の種別の、攻撃を受けた時の合算に使うマスターデータ 1 件。
+ *
+ * `target` は受ける攻撃の攻撃種別を表す。全攻撃（`any`）を対象にする種別は無いため、型で除外している。
+ */
+export type ResistanceKindDefinition = {
+  kind: ResistanceStatusEffectKind;
+  target: Exclude<StatusEffectAttackTarget, { type: "any" }>;
+};
+
 /** バフ（強化効果）かデバフ（弱体効果）か。種別の属性であり、種別から決まる。 */
 export type StatusEffectPolarity = "buff" | "debuff";
 
@@ -256,12 +329,14 @@ export type StatusEffectKindDefinition = {
    * ダメージアップ系では、種別ごとのまとまりではなく「枠 × ダメージ計算の攻撃種別」の合算に掛かる。
    * 参照されるのは、武器種・属性の攻撃なら対応する武器種別・属性別の種別の値、
    * 無属性攻撃なら全攻撃（`damageUp`）の値で、全物理・全属性・条件付きの種別の値は参照されない。
+   * 耐性系も同様に「枠 × 受ける攻撃のダメージ計算の攻撃種別」の合算に掛かり、参照されるのは
+   * 対応する武器種別・属性別の種別の値。
    */
   defaultMagnitudeCap: number | null;
 };
 
 /**
- * バフ・デバフの「枠」。効果量の上限（パラメーター系・ダメージアップ系は基本 30%）は枠ごとに別々に数える。
+ * バフ・デバフの「枠」。効果量の上限（パラメーター系・ダメージアップ系・耐性系は基本 30%）は枠ごとに別々に数える。
  *
  * - `battleAbility` … バトルアビリティ。支援者・援魔石（神獣を除く）・EX アビリティも含む
  * - `supportAbility` … サポートアビリティと装備性能（アクセサリー等）
@@ -366,6 +441,13 @@ export type StatusEffectPool = {
  * 「サポアビと装備性能による物理ダメージアップの上限が 50%」（剣士 ヴィオラEX「神器の継承者」）は
  * 8 武器種の種別に 1 件ずつ、「剣攻撃ダメージアップの上限が 50%」は `swordDamageUp` に 1 件付与する。
  * 全物理・全属性・全攻撃・条件付きの種別は指定できない。
+ *
+ * 耐性系も同じく「枠 × 受ける攻撃のダメージ計算の攻撃種別」ごとに掛かるため、武器種別・属性別の
+ * 種別を指定する。「バトアビによる / サポアビと装備性能による 槍・斧・闇耐性ダウンを受けた際の上限が
+ * 60%」（狂騒の愚者「満ちる叛意 灯火」）は 3 種別 × 2 枠の 6 件、「サポアビと装備性能による
+ * 属性耐性ダウンを受けた際の上限が 50%」（七英雄ロックブーケ「魅惑の誘い 灯火」）は属性 6 種の
+ * 種別に 1 件ずつ付与する。全物理・全属性の種別は指定できない。
+ *
  * 上限の無い種別（ダメージ上限アップ系）も指定できない。
  */
 export type StatusEffectMagnitudeCapApplication = {
