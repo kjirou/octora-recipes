@@ -2,13 +2,15 @@ import { describe, expect, it, test } from "vitest";
 
 import { activeAbilityDataDict } from "../activeAbilities";
 import { passiveAbilityDataDict } from "../passiveAbilities";
-import { findDuplicateIds } from "../testHelper";
+import { findDuplicates } from "../testHelper";
 
 import { characterDataList, isCharacterDataId } from ".";
 
 describe("characterDataList", () => {
   it("キャラクターの id が重複していない", () => {
-    expect(findDuplicateIds(characterDataList)).toStrictEqual([]);
+    expect(
+      findDuplicates(characterDataList.map((character) => character.id)),
+    ).toStrictEqual([]);
   });
 
   describe("id", () => {
@@ -43,9 +45,7 @@ describe("characterDataList", () => {
     test.each(characterDataList)(
       "$id は同じアビリティを重複して持たない",
       (character) => {
-        expect(
-          findDuplicateIds(getIds(character).map((id) => ({ id }))),
-        ).toStrictEqual([]);
+        expect(findDuplicates(getIds(character))).toStrictEqual([]);
       },
     );
 

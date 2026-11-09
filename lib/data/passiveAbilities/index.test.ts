@@ -1,12 +1,14 @@
 import { describe, expect, it, test } from "vitest";
 
-import { findDuplicateIds } from "../testHelper";
+import { findDuplicates } from "../testHelper";
 
 import { isPassiveAbilityDataId, passiveAbilityDataList } from ".";
 
 describe("passiveAbilityDataList", () => {
   it("パッシブアビリティの id が重複していない", () => {
-    expect(findDuplicateIds(passiveAbilityDataList)).toStrictEqual([]);
+    expect(
+      findDuplicates(passiveAbilityDataList.map((ability) => ability.id)),
+    ).toStrictEqual([]);
   });
 
   describe("id", () => {
