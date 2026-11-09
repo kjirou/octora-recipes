@@ -36,103 +36,139 @@ const turns = (turns: number): StatusEffectDuration => ({
 });
 
 const violaAntiAttack2: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "viola",
   abilityId: "antiAttack2",
 };
 const therionTenso: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "therion",
   abilityId: "tenso",
 };
-const sourceA: StatusEffectSource = { characterId: "a", abilityId: "a" };
-const sourceB: StatusEffectSource = { characterId: "b", abilityId: "b" };
+const sourceA: StatusEffectSource = {
+  type: "activeAbility",
+  characterId: "a",
+  abilityId: "a",
+};
+const sourceB: StatusEffectSource = {
+  type: "activeAbility",
+  characterId: "b",
+  abilityId: "b",
+};
 const permanentSource1: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "p",
   abilityId: "p1",
 };
 const permanentSource2: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "p",
   abilityId: "p2",
 };
-const timedSource1: StatusEffectSource = { characterId: "t", abilityId: "t1" };
+const timedSource1: StatusEffectSource = {
+  type: "passiveAbility",
+  characterId: "t",
+  abilityId: "t1",
+};
 const lueckAlbedoChiefsDaughter: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "lueck",
   abilityId: "albedoChiefsDaughter",
 };
 const lueckBlasterMine: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "lueck",
   abilityId: "blasterMine",
 };
 const rocbouquetTemptation: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "rocbouquet",
   abilityId: "temptationEx",
 };
 const augusteDeepGreenEnsemble: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "augusteEx",
   abilityId: "deepGreenEnsembleTorch",
 };
 const violaLikeRagingFire: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "violaEx",
   abilityId: "likeRagingFire",
 };
 const violaHeirOfDivineWeapon: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "violaEx",
   abilityId: "heirOfDivineWeapon",
 };
 const soniaSaltarello: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "soniaEx",
   abilityId: "braveAxeSaltarello",
 };
 const molussoLiven: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "molussoEx",
   abilityId: "liven",
 };
 const crimsonCondemnerAura: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "crimsonCondemner",
   abilityId: "auraOfRedHeartAll5",
 };
 const rocbouquetSingleMindedLove: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "rocbouquet",
   abilityId: "singleMindedLove",
 };
-/** 覚醒アクセサリー「真心のポーチ」。装備者（自身）にだけ掛かるので、装備者の ID で表す。 */
+/** 覚醒アクセサリー「真心のポーチ」。装備者（自身）にだけ掛かる。 */
 const finalEmpressSincerityPouch: StatusEffectSource = {
+  type: "equipment",
   characterId: "finalEmpressFemale",
-  abilityId: "sincerityPouch",
+  equipmentId: "sincerityPouch",
 };
 
 const lueckBaor: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "lueck",
   abilityId: "baor",
 };
 const linyuBreathOfTheSea: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "linyuEx",
   abilityId: "breathOfTheSea",
 };
 const osvaldPriceOfMagic: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "osvaldEx",
   abilityId: "priceOfMagic",
 };
 const rocbouquetPassionPerfume: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "rocbouquet",
   abilityId: "passionPerfume",
 };
 const frenziedFoolRisingRebellion: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "frenziedFool",
   abilityId: "risingRebellionTorch",
 };
 const frenziedFoolPlundererFury: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "frenziedFool",
   abilityId: "plundererFury",
 };
 const frenziedFoolPlunderSpear: StatusEffectSource = {
+  type: "activeAbility",
   characterId: "frenziedFool",
   abilityId: "plunderSpear",
 };
 const rocbouquetEnticingInvitation: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "rocbouquet",
   abilityId: "enticingInvitationTorch",
 };
 const linyuMermaidsSorrow: StatusEffectSource = {
+  type: "passiveAbility",
   characterId: "linyuEx",
   abilityId: "mermaidsSorrow",
 };
@@ -373,21 +409,28 @@ describe("isSameStatusEffectSource", () => {
       name: "キャラとアビリティが同じなら同じ付与元",
       args: [
         violaAntiAttack2,
-        { characterId: "viola", abilityId: "antiAttack2" },
+        {
+          type: "activeAbility",
+          characterId: "viola",
+          abilityId: "antiAttack2",
+        },
       ],
       expected: true,
     },
     {
       name: "同名アビリティでもキャラが違えば別の付与元",
       args: [
-        { characterId: "cress", abilityId: "backstab" },
-        { characterId: "duran", abilityId: "backstab" },
+        { type: "activeAbility", characterId: "cress", abilityId: "backstab" },
+        { type: "activeAbility", characterId: "duran", abilityId: "backstab" },
       ],
       expected: false,
     },
     {
       name: "同じキャラでもアビリティが違えば別の付与元",
-      args: [violaAntiAttack2, { characterId: "viola", abilityId: "other" }],
+      args: [
+        violaAntiAttack2,
+        { type: "activeAbility", characterId: "viola", abilityId: "other" },
+      ],
       expected: false,
     },
     {
@@ -402,6 +445,64 @@ describe("isSameStatusEffectSource", () => {
         { ...violaAntiAttack2, variant: "boostMax" },
       ],
       expected: true,
+    },
+    {
+      name: "キャラとアビリティ ID が同じでも、アクティブとパッシブなら別の付与元",
+      args: [
+        { type: "activeAbility", characterId: "viola", abilityId: "same" },
+        { type: "passiveAbility", characterId: "viola", abilityId: "same" },
+      ],
+      expected: false,
+    },
+    {
+      name: "パッシブアビリティはキャラとアビリティが同じなら同じ付与元",
+      args: [lueckAlbedoChiefsDaughter, { ...lueckAlbedoChiefsDaughter }],
+      expected: true,
+    },
+    {
+      name: "パッシブアビリティはキャラが違えば別の付与元",
+      args: [
+        lueckAlbedoChiefsDaughter,
+        { ...lueckAlbedoChiefsDaughter, characterId: "other" },
+      ],
+      expected: false,
+    },
+    {
+      name: "パッシブアビリティはアビリティが違えば別の付与元",
+      args: [
+        lueckAlbedoChiefsDaughter,
+        { ...lueckAlbedoChiefsDaughter, abilityId: "other" },
+      ],
+      expected: false,
+    },
+    {
+      name: "装備品はキャラと装備品が同じなら同じ付与元",
+      args: [finalEmpressSincerityPouch, { ...finalEmpressSincerityPouch }],
+      expected: true,
+    },
+    {
+      name: "装備品はキャラが違えば別の付与元",
+      args: [
+        finalEmpressSincerityPouch,
+        { ...finalEmpressSincerityPouch, characterId: "other" },
+      ],
+      expected: false,
+    },
+    {
+      name: "装備品は装備品が違えば別の付与元",
+      args: [
+        finalEmpressSincerityPouch,
+        { ...finalEmpressSincerityPouch, equipmentId: "other" },
+      ],
+      expected: false,
+    },
+    {
+      name: "装備品とアビリティは別の付与元",
+      args: [
+        { type: "equipment", characterId: "viola", equipmentId: "same" },
+        { type: "passiveAbility", characterId: "viola", abilityId: "same" },
+      ],
+      expected: false,
     },
   ])("$name", ({ args, expected }) => {
     expect(isSameStatusEffectSource(...args)).toBe(expected);
@@ -1707,12 +1808,20 @@ describe("applyStatusEffect", () => {
           createApplication({
             kind: "physicalDefenseDown",
             magnitude: 15,
-            source: { characterId: "cress", abilityId: "backstab" },
+            source: {
+              type: "activeAbility",
+              characterId: "cress",
+              abilityId: "backstab",
+            },
           }),
           createApplication({
             kind: "physicalDefenseDown",
             magnitude: 15,
-            source: { characterId: "duran", abilityId: "backstab" },
+            source: {
+              type: "activeAbility",
+              characterId: "duran",
+              abilityId: "backstab",
+            },
           }),
         ],
         expected: [
@@ -1721,8 +1830,16 @@ describe("applyStatusEffect", () => {
             timedMagnitude: 30,
             remainingTurns: 4,
             timedSources: [
-              { characterId: "cress", abilityId: "backstab" },
-              { characterId: "duran", abilityId: "backstab" },
+              {
+                type: "activeAbility",
+                characterId: "cress",
+                abilityId: "backstab",
+              },
+              {
+                type: "activeAbility",
+                characterId: "duran",
+                abilityId: "backstab",
+              },
             ],
           }),
         ],
@@ -1732,14 +1849,24 @@ describe("applyStatusEffect", () => {
         applications: Array.from({ length: 4 }, () =>
           createApplication({
             magnitude: 15,
-            source: { characterId: "chloe", abilityId: "kazakiribane" },
+            source: {
+              type: "activeAbility",
+              characterId: "chloe",
+              abilityId: "kazakiribane",
+            },
           }),
         ),
         expected: [
           createPool({
             timedMagnitude: 15,
             remainingTurns: 8,
-            timedSources: [{ characterId: "chloe", abilityId: "kazakiribane" }],
+            timedSources: [
+              {
+                type: "activeAbility",
+                characterId: "chloe",
+                abilityId: "kazakiribane",
+              },
+            ],
           }),
         ],
       },
@@ -1772,12 +1899,20 @@ describe("applyStatusEffect", () => {
         applications: [
           createApplication({
             magnitude: 10,
-            source: { characterId: "francesca", abilityId: "hametsuNoUta" },
+            source: {
+              type: "activeAbility",
+              characterId: "francesca",
+              abilityId: "hametsuNoUta",
+            },
             stacksWithSameSource: true,
           }),
           createApplication({
             magnitude: 10,
-            source: { characterId: "francesca", abilityId: "hametsuNoUta" },
+            source: {
+              type: "activeAbility",
+              characterId: "francesca",
+              abilityId: "hametsuNoUta",
+            },
             stacksWithSameSource: true,
           }),
         ],
@@ -1786,7 +1921,11 @@ describe("applyStatusEffect", () => {
             timedMagnitude: 20,
             remainingTurns: 4,
             timedSources: [
-              { characterId: "francesca", abilityId: "hametsuNoUta" },
+              {
+                type: "activeAbility",
+                characterId: "francesca",
+                abilityId: "hametsuNoUta",
+              },
             ],
           }),
         ],
@@ -1796,11 +1935,16 @@ describe("applyStatusEffect", () => {
         applications: [
           createApplication({
             magnitude: 15,
-            source: { characterId: "titi", abilityId: "raijuNoUta" },
+            source: {
+              type: "activeAbility",
+              characterId: "titi",
+              abilityId: "raijuNoUta",
+            },
           }),
           createApplication({
             magnitude: 15,
             source: {
+              type: "activeAbility",
               characterId: "titi",
               abilityId: "raijuNoUta",
               variant: "boostMax",
@@ -1809,6 +1953,7 @@ describe("applyStatusEffect", () => {
           createApplication({
             magnitude: 15,
             source: {
+              type: "activeAbility",
               characterId: "titi",
               abilityId: "raijuNoUta",
               variant: "boostMax",
@@ -1820,8 +1965,13 @@ describe("applyStatusEffect", () => {
             timedMagnitude: 30,
             remainingTurns: 6,
             timedSources: [
-              { characterId: "titi", abilityId: "raijuNoUta" },
               {
+                type: "activeAbility",
+                characterId: "titi",
+                abilityId: "raijuNoUta",
+              },
+              {
+                type: "activeAbility",
                 characterId: "titi",
                 abilityId: "raijuNoUta",
                 variant: "boostMax",
@@ -1835,13 +1985,21 @@ describe("applyStatusEffect", () => {
         applications: [
           createApplication({
             kind: "physicalAttackUp",
-            source: { characterId: "lynette", abilityId: "tatsujinNoKobu3" },
+            source: {
+              type: "activeAbility",
+              characterId: "lynette",
+              abilityId: "tatsujinNoKobu3",
+            },
           }),
           createApplication({
             slot: "ultimate",
             kind: "physicalAttackUp",
             duration: turns(3),
-            source: { characterId: "primrose", abilityId: "ultimate" },
+            source: {
+              type: "activeAbility",
+              characterId: "primrose",
+              abilityId: "ultimate",
+            },
           }),
         ],
         expected: [
@@ -1850,7 +2008,11 @@ describe("applyStatusEffect", () => {
             timedMagnitude: 20,
             remainingTurns: 2,
             timedSources: [
-              { characterId: "lynette", abilityId: "tatsujinNoKobu3" },
+              {
+                type: "activeAbility",
+                characterId: "lynette",
+                abilityId: "tatsujinNoKobu3",
+              },
             ],
           }),
           createPool({
@@ -1858,7 +2020,13 @@ describe("applyStatusEffect", () => {
             kind: "physicalAttackUp",
             timedMagnitude: 20,
             remainingTurns: 3,
-            timedSources: [{ characterId: "primrose", abilityId: "ultimate" }],
+            timedSources: [
+              {
+                type: "activeAbility",
+                characterId: "primrose",
+                abilityId: "ultimate",
+              },
+            ],
           }),
         ],
       },
