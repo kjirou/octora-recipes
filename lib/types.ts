@@ -497,24 +497,48 @@ export type StatusEffectDuration =
   { type: "permanent" } | { type: "turns"; turns: number };
 
 /**
- * バフ・デバフの付与元。「誰のどのアビリティか」で識別する。
+ * バフ・デバフ・威力アップの付与元。由来ごとのタグで、どのデータ種別の ID を参照するかが決まる。
  *
  * 「同じアビリティの重ね掛けでは効果量が増えない」判定と、ターン無し効果の取り除きに使う。
- * 同名アビリティでも使用キャラが違えば別の付与元になる。
- * キャラクターのステータスを参照する効果のために、キャラクター単体でも識別できるようにしている。
+ * タグとすべてのメンバーが一致すれば同じ付与元になる。同名アビリティでも使用キャラが違えば
+ * 別の付与元になる。アクティブアビリティとパッシブアビリティは ID の一意性をデータ種別の中で
+ * 保証しているため、同じ `abilityId` でもタグが違えば別の付与元になる。
+ * キャラクターのステータスを参照する効果のために、どの由来も `characterId` を持つ。
+ *
+ * 支援者・援魔石・神獣・支炎獣の由来は、それぞれのデータ種別を作るときにタグを追加する。
+ *
+ * メンバーの ASCII 順。
  */
-export type StatusEffectSource = {
-  characterId: DataId;
-  abilityId: DataId;
-  /**
-   * 同じキャラ・同じアビリティでも別の付与元として扱いたい場合の区別。
-   *
-   * 例: ティティの「猛将の鼓舞Ⅲ」は説明に「ブースト MAX 時重複可」とあり、ブースト MAX で
-   * 使った場合とそれ以外で使った場合を重ね掛けできる。このようなアビリティをブースト MAX で
-   * 使った場合に `"boostMax"` を指定すると、同じアビリティでも別の付与元として効果量が加算される。
-   */
-  variant?: string;
-};
+export type StatusEffectSource =
+  | {
+      type: "activeAbility";
+      /** 使用したキャラクターの ID。 */
+      characterId: DataId;
+      /** `lib/data/activeAbilities/` の ID。 */
+      abilityId: DataId;
+      /**
+       * 同じキャラ・同じアビリティでも別の付与元として扱いたい場合の区別。
+       *
+       * 例: ティティの「猛将の鼓舞Ⅲ」は説明に「ブースト MAX 時重複可」とあり、ブースト MAX で
+       * 使った場合とそれ以外で使った場合を重ね掛けできる。このようなアビリティをブースト MAX で
+       * 使った場合に `"boostMax"` を指定すると、同じアビリティでも別の付与元として効果量が加算される。
+       */
+      variant?: string;
+    }
+  | {
+      type: "equipment";
+      /** 装備しているキャラクターの ID。 */
+      characterId: DataId;
+      /** 装備品の ID。装備品のデータ種別は未作成なので、当面は文字列として扱う。 */
+      equipmentId: DataId;
+    }
+  | {
+      type: "passiveAbility";
+      /** アビリティを持つキャラクターの ID。 */
+      characterId: DataId;
+      /** `lib/data/passiveAbilities/` の ID。 */
+      abilityId: DataId;
+    };
 
 /**
  * アビリティ等が 1 回の行動で付与するバフ・デバフ 1 件分の内容。
@@ -727,10 +751,7 @@ export type PowerUpApplication = {
   /** 効果量（%）。正の値。上限は無い。 */
   magnitude: number;
   duration: StatusEffectDuration;
-  /**
-   * 付与元。ターン無し効果の差し替え・取り除きに使う。
-   * 装備品由来の場合は `abilityId` に装備品の ID を入れる。
-   */
+  /** 付与元。ターン無し効果の差し替え・取り除きに使う。装備品由来は `type: "equipment"`。 */
   source: StatusEffectSource;
 };
 

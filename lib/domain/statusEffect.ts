@@ -16,7 +16,7 @@
  *   上限が上がった瞬間に、それまで 30% を超えていた分も反映される。
  * - ターン無し効果とターン付き効果は同じまとまりに効果量を合算する
  *   （例: サポアビ枠でターン無し物攻 +10% とターン付き物攻 +15% なら、サポアビ枠として +25%）。
- * - ターン付き効果は、同じ付与元（同キャラ・同アビリティ）を重ねても効果量が増えない。
+ * - ターン付き効果は、同じ付与元（同じ由来・同キャラ・同アビリティ）を重ねても効果量が増えない。
  *   付与元が違えば加算する。例外として、支援者・援魔石のように同じ技でも重なるものは
  *   {@link StatusEffectApplication.stacksWithSameSource} で表す。
  * - ターン付き効果の継続ターンは、付与元が同じでも違っても合算し、上限は 9 ターン。
@@ -122,14 +122,39 @@ export const createEmptyStatusEffectState = (): StatusEffectState => ({
   magnitudeCaps: [],
 });
 
-/** 2 つの付与元が同じかを返す。キャラ・アビリティ・区別がすべて一致すれば同じ。 */
+/** 2 つの付与元が同じかを返す。由来のタグと、そのタグのメンバーがすべて一致すれば同じ。 */
 export const isSameStatusEffectSource = (
   a: StatusEffectSource,
   b: StatusEffectSource,
-): boolean =>
-  a.characterId === b.characterId &&
-  a.abilityId === b.abilityId &&
-  a.variant === b.variant;
+): boolean => {
+  switch (a.type) {
+    case "activeAbility":
+      return (
+        b.type === "activeAbility" &&
+        a.characterId === b.characterId &&
+        a.abilityId === b.abilityId &&
+        a.variant === b.variant
+      );
+    case "equipment":
+      return (
+        b.type === "equipment" &&
+        a.characterId === b.characterId &&
+        a.equipmentId === b.equipmentId
+      );
+    case "passiveAbility":
+      return (
+        b.type === "passiveAbility" &&
+        a.characterId === b.characterId &&
+        a.abilityId === b.abilityId
+      );
+    default: {
+      const exhaustiveCheck: never = a;
+      throw new Error(
+        `Unknown status effect source: ${JSON.stringify(exhaustiveCheck)}`,
+      );
+    }
+  }
+};
 
 /** 指定した「枠 × 種別」のまとまりを返す。無ければ undefined。 */
 export const findStatusEffectPool = (
