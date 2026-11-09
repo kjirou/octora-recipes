@@ -26,12 +26,12 @@ describe("isPassiveAbilityDataId", () => {
   }>([
     {
       name: "定義されている ID なら true を返す",
-      args: ["lueck:albedoChieftainsDaughter"],
+      args: ["ryukku:albedoChieftainsDaughter"],
       expected: true,
     },
     {
       name: "アクティブアビリティの ID なら false を返す",
-      args: ["lueck:mixBlasterMine"],
+      args: ["ryukku:mixBlasterMine"],
       expected: false,
     },
     {

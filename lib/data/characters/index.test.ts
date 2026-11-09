@@ -71,7 +71,7 @@ describe("isCharacterDataId", () => {
   }>([
     {
       name: "定義されている ID なら true を返す",
-      args: ["lueck"],
+      args: ["ryukku"],
       expected: true,
     },
     {

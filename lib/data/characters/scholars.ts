@@ -16,17 +16,17 @@ export const scholarCharactersJson = [
     passiveAbilityDataIds: [],
   },
   {
-    id: "lueck",
+    id: "ryukku",
     name: "リュック",
     job: "scholar",
     influence: "wealth",
     rarity: 5,
     activeAbilityDataIds: [
-      "lueck:mixBlasterMine",
-      "lueck:mixBaoru",
-      "lueck:mixFinalElixir",
+      "ryukku:mixBlasterMine",
+      "ryukku:mixBaoru",
+      "ryukku:mixFinalElixir",
     ],
-    passiveAbilityDataIds: ["lueck:albedoChieftainsDaughter"],
+    passiveAbilityDataIds: ["ryukku:albedoChieftainsDaughter"],
   },
 ] as const satisfies ReadonlyArray<CharacterDataDef>;
 

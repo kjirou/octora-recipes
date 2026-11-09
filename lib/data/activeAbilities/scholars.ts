@@ -20,17 +20,17 @@ export const scholarActiveAbilitiesJson = [
   },
   // --- リュック ---
   {
-    id: "lueck:mixBlasterMine",
+    id: "ryukku:mixBlasterMine",
     name: "調合：ブラスターマイン",
     category: "battleAbility",
   },
   {
-    id: "lueck:mixBaoru",
+    id: "ryukku:mixBaoru",
     name: "調合：バオール",
     category: "battleAbility",
   },
   {
-    id: "lueck:mixFinalElixir",
+    id: "ryukku:mixFinalElixir",
     name: "調合：ファイナルエリクサー",
     category: "ultimate",
   },
