@@ -41,9 +41,144 @@ export type AttackType = Element | Weapon;
  */
 export type DamageAttackType = AttackType | "nonElemental";
 
+/**
+ * ジョブ。剣士・商人・盗賊・薬師・狩人・神官・学者・踊子の 8 種。
+ *
+ * - `apothecary` … 薬師（斧）
+ * - `cleric` … 神官（杖）
+ * - `dancer` … 踊子（扇）
+ * - `hunter` … 狩人（弓）
+ * - `merchant` … 商人（槍）
+ * - `scholar` … 学者（本）
+ * - `thief` … 盗賊（短剣）
+ * - `warrior` … 剣士（剣）
+ */
+export type Job =
+  | "apothecary"
+  | "cleric"
+  | "dancer"
+  | "hunter"
+  | "merchant"
+  | "scholar"
+  | "thief"
+  | "warrior";
+
+/**
+ * 影響力。キャラクターごとにいずれか 1 つを持つ。
+ *
+ * - `fame` … 名声（承認）
+ * - `power` … 権力（支配）
+ * - `wealth` … 富（所有）
+ */
+export type Influence = "fame" | "power" | "wealth";
+
+/**
+ * キャラクターのレアリティ（★3 / ★4 / ★5）。
+ *
+ * 他の列挙型と違い数値リテラルの union にしている。値が ★ の数そのもので、大小の比較にも使えるため。
+ */
+export type Rarity = 3 | 4 | 5;
+
 // =============================================================================
 // 2. マスターデータ
 // =============================================================================
+//
+// キャラクター・アビリティのように「増え続ける・ID で参照する」静的データの型。
+// データ本体は lib/data/ に置く。データ種別ごとに次の 2 段の型を持つ。
+//
+// - XxxDataDef … データ定義用の型。省略可能なプロパティを含む。プロパティは ASCII 順
+// - XxxData … 省略可能なプロパティに既定値を補完した、読み取り専用の型
+//
+// ステータス効果の種別や状態異常の種別のような閉じた列挙のマスターデータは、
+// ここではなく lib/domain/ に置く。
+
+/** マスターデータの ID。データ種別の中で一意。 */
+export type DataId = string;
+
+// アビリティはアクティブアビリティとパッシブアビリティに大別する。両者は扱いが大きく異なるため、
+// 型もデータ種別（lib/data/activeAbilities/ と lib/data/passiveAbilities/）も分ける。
+// どちらもキャラクターへの参照は持たない（キャラクター側が ID の一覧で参照する）。
+// 効果の内容（付与するステータス効果・威力アップなど）は未定義。
+
+/**
+ * アクティブアビリティの種類。プレイヤーが行動として選択して使うもの。
+ *
+ * - `battleAbility` … バトルアビリティ（SP 消費）
+ * - `exAbility` … EX アビリティ（使用回数制限のあるバトルアビリティ）
+ * - `ultimate` … 必殺技
+ */
+export type ActiveAbilityCategory = "battleAbility" | "exAbility" | "ultimate";
+
+/** アクティブアビリティのデータ定義用の型。 */
+export type ActiveAbilityDataDef = Readonly<{
+  category: ActiveAbilityCategory;
+  /** 一意な ID（例: `"ryukku:mixBlasterMine"`）。命名規則は lib/data/activeAbilities/index.ts を参照。 */
+  id: DataId;
+  /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"調合：ブラスターマイン"`）。 */
+  name: string;
+}>;
+
+/** アクティブアビリティの読み取り専用データ。 */
+export type ActiveAbilityData = Readonly<Required<ActiveAbilityDataDef>>;
+
+/**
+ * パッシブアビリティの種類。行動を消費せず自動で効く（または常時掛かる）もの。
+ *
+ * - `supportAbility` … サポートアビリティ（後衛からでも発動する）
+ *
+ * 今後、ベーシックアビリティ・灯火の加護・灯火の加護強化ボーナスを追加する。
+ */
+export type PassiveAbilityCategory = "supportAbility";
+
+/** パッシブアビリティのデータ定義用の型。 */
+export type PassiveAbilityDataDef = Readonly<{
+  category: PassiveAbilityCategory;
+  /** 一意な ID（例: `"ryukku:albedoChieftainsDaughter"`）。命名規則は lib/data/passiveAbilities/index.ts を参照。 */
+  id: DataId;
+  /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"アルベド族長の娘"`）。 */
+  name: string;
+}>;
+
+/** パッシブアビリティの読み取り専用データ。 */
+export type PassiveAbilityData = Readonly<Required<PassiveAbilityDataDef>>;
+
+/** キャラクター（旅人）のデータ定義用の型。 */
+export type CharacterDataDef = Readonly<{
+  /** そのキャラクターが持つアクティブアビリティの ID 一覧。 */
+  activeAbilityDataIds: readonly DataId[];
+  /**
+   * 英語版での表示名。
+   *
+   * - 未指定時は `null` で補完される。
+   */
+  englishName?: string | null;
+  /** 一意な ID（例: `"ryukku"`）。命名規則は lib/data/characters/index.ts を参照。 */
+  id: DataId;
+  influence: Influence;
+  job: Job;
+  /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"七英雄ロックブーケ"`）。 */
+  name: string;
+  /** そのキャラクターが持つパッシブアビリティの ID 一覧。 */
+  passiveAbilityDataIds: readonly DataId[];
+  rarity: Rarity;
+}>;
+
+/** キャラクターの読み取り専用データ。 */
+export type CharacterData = Readonly<Required<CharacterDataDef>>;
+
+/**
+ * 全データ種別の辞書と一覧をまとめたもの。
+ *
+ * ロジック側は lib/data/ を直接 import せず、これを引数で受け取る。
+ */
+export type DataCatalog = Readonly<{
+  activeAbilityDataDict: Readonly<Record<DataId, ActiveAbilityData>>;
+  activeAbilityDataList: ReadonlyArray<ActiveAbilityData>;
+  characterDataDict: Readonly<Record<DataId, CharacterData>>;
+  characterDataList: ReadonlyArray<CharacterData>;
+  passiveAbilityDataDict: Readonly<Record<DataId, PassiveAbilityData>>;
+  passiveAbilityDataList: ReadonlyArray<PassiveAbilityData>;
+}>;
 
 // =============================================================================
 // 3. パーティ編成
@@ -369,8 +504,8 @@ export type StatusEffectDuration =
  * キャラクターのステータスを参照する効果のために、キャラクター単体でも識別できるようにしている。
  */
 export type StatusEffectSource = {
-  characterId: string;
-  abilityId: string;
+  characterId: DataId;
+  abilityId: DataId;
   /**
    * 同じキャラ・同じアビリティでも別の付与元として扱いたい場合の区別。
    *
@@ -536,11 +671,11 @@ export type StatusAilmentKindDefinition = {
 /** 特殊効果のマスターデータ 1 件。 */
 export type SpecialEffectDefinition = {
   /** 一意な ID（例: `"kazan:ikkon"`）。 */
-  id: string;
+  id: DataId;
   /** 日本語の表示名。ゲーム内のアビリティ説明文での名称（例: 一献）。 */
   name: string;
   /** キャラ固有の特殊効果なら、そのキャラクターの ID。 */
-  characterId?: string;
+  characterId?: DataId;
 };
 
 // --- 威力アップ -----------------------------------------------------------------
