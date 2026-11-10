@@ -33,22 +33,22 @@ const ice: PowerUpTarget = { type: "attackType", attackType: "ice" };
 
 const osvaldPriceOfMagic: StatusEffectSource = {
   type: "activeAbility",
-  characterId: "osvaldEx",
+  characterId: "cleric:ozubarudo",
   abilityId: "priceOfMagic",
 };
 const violaEssenceOfDivineWeapon: StatusEffectSource = {
   type: "passiveAbility",
-  characterId: "violaEx",
+  characterId: "warrior:viora",
   abilityId: "essenceOfDivineWeapon",
 };
 const fireAmplifier: StatusEffectSource = {
   type: "equipment",
-  characterId: "violaEx",
+  characterId: "warrior:viora",
   equipmentId: "fireMagicAmplifier",
 };
 const huntressWeapon: StatusEffectSource = {
   type: "equipment",
-  characterId: "violaEx",
+  characterId: "warrior:viora",
   equipmentId: "huntressWeapon4",
 };
 /** 無条件のターン無し効果の付与元（ヴィオラ EX とは別の付与元）。 */
