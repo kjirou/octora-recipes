@@ -146,12 +146,6 @@ export type PassiveAbilityData = Readonly<Required<PassiveAbilityDataDef>>;
 export type CharacterDataDef = Readonly<{
   /** そのキャラクターが持つアクティブアビリティの ID 一覧。 */
   activeAbilityDataIds: readonly DataId[];
-  /**
-   * 英語版での表示名。
-   *
-   * - 未指定時は `null` で補完される。
-   */
-  englishName?: string | null;
   /** 一意な ID（例: `"ryukku"`）。命名規則は lib/data/characters/index.ts を参照。 */
   id: DataId;
   influence: Influence;
