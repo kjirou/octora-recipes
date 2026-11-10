@@ -2021,8 +2021,8 @@ describe("applyStatusEffect", () => {
             duration: turns(3),
             source: {
               type: "activeAbility",
-              characterId: "dancer:purimuroze",
-              abilityId: "dancer:purimuroze:nadeshikonomai",
+              characterId: "dancer:rinetto",
+              abilityId: "dancer:rinetto:nadeshikonomai",
             },
           }),
         ],
@@ -2047,8 +2047,8 @@ describe("applyStatusEffect", () => {
             timedSources: [
               {
                 type: "activeAbility",
-                characterId: "dancer:purimuroze",
-                abilityId: "dancer:purimuroze:nadeshikonomai",
+                characterId: "dancer:rinetto",
+                abilityId: "dancer:rinetto:nadeshikonomai",
               },
             ],
           }),
