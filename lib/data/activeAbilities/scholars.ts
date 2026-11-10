@@ -4,33 +4,33 @@ import type { ActiveAbilityDataDef } from "@/lib/types";
 export const scholarActiveAbilitiesJson = [
   // --- カザン ---
   {
-    id: "kazan:ikkon",
+    id: "scholar:kazan:ikkon",
     name: "一献",
     category: "battleAbility",
   },
   {
-    id: "kazan:shukuen",
+    id: "scholar:kazan:shukuen",
     name: "祝宴",
     category: "battleAbility",
   },
   {
-    id: "kazan:shisenHappenNoKei",
+    id: "scholar:kazan:shisenHappenNoKei",
     name: "四旋八焔の計",
     category: "ultimate",
   },
   // --- リュック ---
   {
-    id: "ryukku:mixBlasterMine",
+    id: "scholar:ryukku:mixBlasterMine",
     name: "調合：ブラスターマイン",
     category: "battleAbility",
   },
   {
-    id: "ryukku:mixBaoru",
+    id: "scholar:ryukku:mixBaoru",
     name: "調合：バオール",
     category: "battleAbility",
   },
   {
-    id: "ryukku:mixFinalElixir",
+    id: "scholar:ryukku:mixFinalElixir",
     name: "調合：ファイナルエリクサー",
     category: "ultimate",
   },

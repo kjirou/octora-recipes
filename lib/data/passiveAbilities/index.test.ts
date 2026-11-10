@@ -13,7 +13,7 @@ describe("passiveAbilityDataList", () => {
 
   describe("id", () => {
     test.each(passiveAbilityDataList)("$id は命名規則に従う", (ability) => {
-      expect(ability.id).toMatch(/^([a-z][a-zA-Z0-9]*:)?[a-z][a-zA-Z0-9]*$/);
+      expect(ability.id).toMatch(/^([a-z]+:[a-z0-9]+:)?[a-z][a-zA-Z0-9]*$/);
     });
   });
 });
@@ -26,12 +26,12 @@ describe("isPassiveAbilityDataId", () => {
   }>([
     {
       name: "定義されている ID なら true を返す",
-      args: ["ryukku:albedoChieftainsDaughter"],
+      args: ["scholar:ryukku:albedoChieftainsDaughter"],
       expected: true,
     },
     {
       name: "アクティブアビリティの ID なら false を返す",
-      args: ["ryukku:mixBlasterMine"],
+      args: ["scholar:ryukku:mixBlasterMine"],
       expected: false,
     },
     {

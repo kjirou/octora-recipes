@@ -4,7 +4,7 @@ import type { PassiveAbilityDataDef } from "@/lib/types";
 export const dancerPassiveAbilitiesJson = [
   // --- 七英雄ロックブーケ ---
   {
-    id: "rocbouquet:alluringInvitationTomoshibi",
+    id: "dancer:shichieiyuurokkubuuke:alluringInvitationTomoshibi",
     name: "魅惑の誘い 灯火",
     category: "supportAbility",
   },

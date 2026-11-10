@@ -4,7 +4,7 @@ import type { PassiveAbilityDataDef } from "@/lib/types";
 export const scholarPassiveAbilitiesJson = [
   // --- リュック ---
   {
-    id: "ryukku:albedoChieftainsDaughter",
+    id: "scholar:ryukku:albedoChieftainsDaughter",
     name: "アルベド族長の娘",
     category: "supportAbility",
   },

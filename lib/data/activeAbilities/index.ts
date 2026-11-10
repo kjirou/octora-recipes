@@ -26,13 +26,13 @@
 //
 // - lower camel case で書く
 // - キャラクター固有のアビリティは `<キャラクター ID>:<アビリティ名>` にする
-//   （例: `ryukku:mixBlasterMine`）。同名のアビリティでもキャラクターが違えば別物で、
+//   （例: `scholar:ryukku:mixBlasterMine`）。同名のアビリティでもキャラクターが違えば別物で、
 //   ID はデータ種別の中で一意にする必要があるため
 // - アビリティ名の部分は英訳が分かればその英訳、分からなければ日本語のローマ字にする
-//   （例: `kazan:ikkon`）
-// - 「調合：」のような接頭辞は英訳して含める（例: `ryukku:mixBlasterMine`）
+//   （例: `scholar:kazan:ikkon`）
+// - 「調合：」のような接頭辞は英訳して含める（例: `scholar:ryukku:mixBlasterMine`）
 // - 「灯火」などの強化版は別のアビリティとして扱い、ID の末尾に付ける
-//   （例: `rocbouquet:alluringInvitationTomoshibi`）
+//   （例: `dancer:shichieiyuurokkubuuke:alluringInvitationTomoshibi`）
 //
 // ## プロパティの記述順
 //
