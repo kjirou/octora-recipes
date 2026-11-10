@@ -11,7 +11,7 @@ export const scholarCharactersJson = [
     activeAbilityDataIds: [
       "scholar:kazan:ikkon",
       "scholar:kazan:shukuen",
-      "scholar:kazan:shisenHappenNoKei",
+      "scholar:kazan:shisenhappennokei",
     ],
     passiveAbilityDataIds: [],
   },
@@ -22,11 +22,11 @@ export const scholarCharactersJson = [
     influence: "wealth",
     rarity: 5,
     activeAbilityDataIds: [
-      "scholar:ryukku:mixBlasterMine",
-      "scholar:ryukku:mixBaoru",
-      "scholar:ryukku:mixFinalElixir",
+      "scholar:ryukku:chougouburasutaamain",
+      "scholar:ryukku:chougoubaooru",
+      "scholar:ryukku:chougoufainaruerikusaa",
     ],
-    passiveAbilityDataIds: ["scholar:ryukku:albedoChieftainsDaughter"],
+    passiveAbilityDataIds: ["scholar:ryukku:arubedozokuchounomusume"],
   },
 ] as const satisfies ReadonlyArray<CharacterDataDef>;
 

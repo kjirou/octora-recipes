@@ -9,12 +9,10 @@ export const dancerCharactersJson = [
     influence: "power",
     rarity: 5,
     activeAbilityDataIds: [
-      "dancer:shichieiyuurokkubuuke:temptationEx",
-      "dancer:shichieiyuurokkubuuke:passionPerfume",
+      "dancer:shichieiyuurokkubuuke:tenputeeshon",
+      "dancer:shichieiyuurokkubuuke:passhonpafyuumu",
     ],
-    passiveAbilityDataIds: [
-      "dancer:shichieiyuurokkubuuke:alluringInvitationTomoshibi",
-    ],
+    passiveAbilityDataIds: ["dancer:shichieiyuurokkubuuke:miwakunoizanai"],
   },
 ] as const satisfies ReadonlyArray<CharacterDataDef>;
 
