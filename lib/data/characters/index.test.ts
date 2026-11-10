@@ -15,8 +15,15 @@ describe("characterDataList", () => {
 
   describe("id", () => {
     test.each(characterDataList)("$id は命名規則に従う", (character) => {
-      expect(character.id).toMatch(/^[a-z][a-zA-Z0-9]*$/);
+      expect(character.id).toMatch(/^[a-z]+:[a-z0-9]+$/);
     });
+
+    test.each(characterDataList)(
+      "$id のジョブの部分は job プロパティと一致する",
+      (character) => {
+        expect(character.id.split(":")[0]).toBe(character.job);
+      },
+    );
   });
 
   describe("データのリレーション", () => {
@@ -54,7 +61,7 @@ describe("characterDataList", () => {
       (character) => {
         const prefixes = getIds(character)
           .filter((id) => id.includes(":"))
-          .map((id) => id.split(":")[0]);
+          .map((id) => id.slice(0, id.lastIndexOf(":")));
         for (const prefix of prefixes) {
           expect(prefix).toBe(character.id);
         }
@@ -71,7 +78,7 @@ describe("isCharacterDataId", () => {
   }>([
     {
       name: "定義されている ID なら true を返す",
-      args: ["ryukku"],
+      args: ["scholar:ryukku"],
       expected: true,
     },
     {

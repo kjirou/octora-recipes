@@ -17,10 +17,37 @@
 //
 // ## ID の命名規則
 //
-// - lower camel case で書く
-// - 英語名が分かればその英語名、分からなければ日本語のローマ字にする
-//   （例: 英語名の `rocbouquet`、ローマ字の `kazan` `ryukku`）。称号（「七英雄」など）は含めない
-// - EX 版など同名の別キャラクターは末尾で区別する（例: `osvaldEx`）
+// - `<ジョブ>:<キャラクター名>` の形にする（例: `scholar:kazan`）。同じキャラクター像が
+//   複数のジョブで別々のキャラクターとして実装されている場合があり、ジョブで区別するため
+//   （例: ヴィオラの 3 キャラクターは `thief:viora` / `scholar:viora` / `warrior:viora`）
+// - `<ジョブ>` は Job 型の値で、そのキャラクターの job プロパティと一致させる
+// - `<キャラクター名>` は、ゲーム内の日本語のキャラクター名の読みをヘボン式ローマ字にしたもの。
+//   英語名は使わない。攻略サイトなどで使われる「EX」は、ゲーム内のキャラクター名に含まれず、
+//   ジョブで区別できるため含めない
+// - 漢字の部分も読みをローマ字にして切れ目なしに含める。称号も省かない
+//   （例: 七英雄ロックブーケ → `dancer:shichieiyuurokkubuuke`）
+// - ジョブと名前が同じで ID が衝突した場合は、個別に区別する語を足し、その理由をデータ定義に
+//   コメントで書く
+//
+// `<キャラクター名>` のローマ字表記の規約。名前から機械的に導けて、別の名前が同じ綴りに
+// なりにくいことを優先する。
+//
+//   基本・拗音      ヘボン式で綴る（し `shi` / ち `chi` / つ `tsu` / ふ `fu` / じ `ji` /
+//                   しゃ `sha` / ちゅ `chu` / じょ `jo` / りゅ `ryu`）
+//   長音            省略せず、仮名のとおりに綴る。「ー」は直前の母音を重ねる。マクロン（`ō`）や
+//                   `h` は使わない（ブーケ `buuke` / えいゆう `eiyuu` / こうてい `koutei`）
+//   促音            次の子音字を重ねる。`ch` の前は `t`（リュック `ryukku` / ルッソ `russo` /
+//                   マッチ `matchi`）
+//   撥音            常に `n`。`b` `m` `p` の前でも `m` にしない。母音・や行の前でも区切り記号を
+//                   入れない（カザン `kazan` / リンユウ `rinyuu`）
+//   助詞            発音どおりに綴る（は `wa` / へ `e` / を `o`）
+//   外来語の仮名    仮名の組み合わせを素直に綴る（ヴァ `va` / ヴィ `vi` / ファ `fa` / ティ `ti` /
+//                   ディ `di` / ウィ `wi` / シェ `she` / チェ `che` / ジェ `je`）
+//   漢字            ゲーム内・公式の読みをローマ字にする。読みが確認できないときは一般的な読みを
+//                   使い、データ定義にコメントで読みを書く（七英雄 `shichieiyuu`）
+//   記号・空白      「・」、空白、括弧などは取り除き、括弧の中身は前後と続けて綴る
+//                   （最終皇帝(女) `saishuukouteionna`）
+//   大文字・小文字  すべて小文字。単語の切れ目で大文字にしない
 //
 // ## プロパティの記述順
 //
@@ -29,15 +56,14 @@
 //
 //   1. id
 //   2. name
-//   3. englishName
-//   4. job
-//   5. influence
-//   6. rarity
-//   7. activeAbilityDataIds    -- 並び順は lib/data/activeAbilities/index.ts のエントリの並び順に合わせる
-//   8. passiveAbilityDataIds   -- 並び順は lib/data/passiveAbilities/index.ts のエントリの並び順に合わせる
+//   3. job
+//   4. influence
+//   5. rarity
+//   6. activeAbilityDataIds    -- 並び順は lib/data/activeAbilities/index.ts のエントリの並び順に合わせる
+//   7. passiveAbilityDataIds   -- 並び順は lib/data/passiveAbilities/index.ts のエントリの並び順に合わせる
 //
 // グルーピングの意図:
-//   - 識別:  id / name / englishName
+//   - 識別:  id / name
 //   - 分類:  job / influence / rarity
 //   - 能力:  activeAbilityDataIds / passiveAbilityDataIds
 //
@@ -61,7 +87,6 @@ export const charactersJson = [
 
 const resolveCharacterData = (def: CharacterDataDef): CharacterData => ({
   ...def,
-  englishName: def.englishName ?? null,
 });
 
 export const characterDataList: ReadonlyArray<CharacterData> =

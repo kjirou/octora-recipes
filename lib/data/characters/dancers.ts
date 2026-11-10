@@ -3,16 +3,18 @@ import type { CharacterDataDef } from "@/lib/types";
 /** ジョブが踊子のキャラクター。 */
 export const dancerCharactersJson = [
   {
-    id: "rocbouquet",
+    id: "dancer:shichieiyuurokkubuuke",
     name: "七英雄ロックブーケ",
     job: "dancer",
     influence: "power",
     rarity: 5,
     activeAbilityDataIds: [
-      "rocbouquet:temptationEx",
-      "rocbouquet:passionPerfume",
+      "dancer:shichieiyuurokkubuuke:temptationEx",
+      "dancer:shichieiyuurokkubuuke:passionPerfume",
     ],
-    passiveAbilityDataIds: ["rocbouquet:alluringInvitationTomoshibi"],
+    passiveAbilityDataIds: [
+      "dancer:shichieiyuurokkubuuke:alluringInvitationTomoshibi",
+    ],
   },
 ] as const satisfies ReadonlyArray<CharacterDataDef>;
 

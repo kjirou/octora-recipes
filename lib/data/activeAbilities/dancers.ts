@@ -4,12 +4,12 @@ import type { ActiveAbilityDataDef } from "@/lib/types";
 export const dancerActiveAbilitiesJson = [
   // --- 七英雄ロックブーケ ---
   {
-    id: "rocbouquet:temptationEx",
+    id: "dancer:shichieiyuurokkubuuke:temptationEx",
     name: "テンプテーション ＥＸ",
     category: "exAbility",
   },
   {
-    id: "rocbouquet:passionPerfume",
+    id: "dancer:shichieiyuurokkubuuke:passionPerfume",
     name: "パッションパフューム",
     category: "ultimate",
   },

@@ -31,33 +31,33 @@ const any: PowerUpTarget = { type: "any" };
 const fire: PowerUpTarget = { type: "attackType", attackType: "fire" };
 const ice: PowerUpTarget = { type: "attackType", attackType: "ice" };
 
-const osvaldPriceOfMagic: StatusEffectSource = {
+const ozubarudoPriceOfMagic: StatusEffectSource = {
   type: "activeAbility",
-  characterId: "osvaldEx",
+  characterId: "cleric:ozubarudo",
   abilityId: "priceOfMagic",
 };
-const violaEssenceOfDivineWeapon: StatusEffectSource = {
+const vioraEssenceOfDivineWeapon: StatusEffectSource = {
   type: "passiveAbility",
-  characterId: "violaEx",
+  characterId: "warrior:viora",
   abilityId: "essenceOfDivineWeapon",
 };
 const fireAmplifier: StatusEffectSource = {
   type: "equipment",
-  characterId: "violaEx",
+  characterId: "warrior:viora",
   equipmentId: "fireMagicAmplifier",
 };
 const huntressWeapon: StatusEffectSource = {
   type: "equipment",
-  characterId: "violaEx",
+  characterId: "warrior:viora",
   equipmentId: "huntressWeapon4",
 };
-/** 無条件のターン無し効果の付与元（ヴィオラ EX とは別の付与元）。 */
+/** 無条件のターン無し効果の付与元（剣士 ヴィオラとは別の付与元）。 */
 const unconditionalPermanentSource: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "other",
   abilityId: "unconditionalPermanentPowerUp",
 };
-/** バトアビで威力アップを付与する、オズバルド EX とは別の付与元。 */
+/** バトアビで威力アップを付与する、神官 オズバルドとは別の付与元。 */
 const otherBattleAbilitySource: StatusEffectSource = {
   type: "activeAbility",
   characterId: "other",
@@ -73,7 +73,7 @@ const createApplication = (
   stacking: "base",
   magnitude: 100,
   duration: turns(2),
-  source: osvaldPriceOfMagic,
+  source: ozubarudoPriceOfMagic,
   ...overrides,
 });
 
@@ -187,7 +187,7 @@ describe("getPowerUpPoolMagnitude", () => {
         createState([
           createPool({
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 150 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 150 },
             ],
             timedMagnitude: 100,
             remainingTurns: 2,
@@ -205,7 +205,7 @@ describe("getPowerUpPoolMagnitude", () => {
         createState([
           createPool({
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
               { source: unconditionalPermanentSource, magnitude: 75 },
             ],
           }),
@@ -256,7 +256,7 @@ describe("getPowerUpMagnitudeByStacking", () => {
           createPool({
             slot: "supportAbility",
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 150 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 150 },
             ],
           }),
         ]),
@@ -446,14 +446,14 @@ describe("applyPowerUp", () => {
         createApplication({
           slot: "supportAbility",
           duration: permanent,
-          source: violaEssenceOfDivineWeapon,
+          source: vioraEssenceOfDivineWeapon,
         }),
       ],
       expected: createState([
         createPool({
           slot: "supportAbility",
           permanentSources: [
-            { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+            { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
           ],
         }),
       ]),
@@ -499,20 +499,20 @@ describe("applyPowerUp", () => {
           slot: "supportAbility",
           magnitude: 150,
           duration: permanent,
-          source: violaEssenceOfDivineWeapon,
+          source: vioraEssenceOfDivineWeapon,
         }),
         createApplication({
           slot: "supportAbility",
           magnitude: 100,
           duration: permanent,
-          source: violaEssenceOfDivineWeapon,
+          source: vioraEssenceOfDivineWeapon,
         }),
       ],
       expected: createState([
         createPool({
           slot: "supportAbility",
           permanentSources: [
-            { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+            { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
           ],
         }),
       ]),
@@ -523,7 +523,7 @@ describe("applyPowerUp", () => {
         createApplication({
           slot: "supportAbility",
           duration: permanent,
-          source: violaEssenceOfDivineWeapon,
+          source: vioraEssenceOfDivineWeapon,
         }),
         createApplication({
           slot: "supportAbility",
@@ -536,7 +536,7 @@ describe("applyPowerUp", () => {
         createPool({
           slot: "supportAbility",
           permanentSources: [
-            { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+            { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
             { source: unconditionalPermanentSource, magnitude: 75 },
           ],
         }),
@@ -631,11 +631,11 @@ describe("removePermanentPowerUp", () => {
           createPool({
             slot: "supportAbility",
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
             ],
           }),
         ]),
-        violaEssenceOfDivineWeapon,
+        vioraEssenceOfDivineWeapon,
       ],
       expected: createState(),
     },
@@ -645,13 +645,13 @@ describe("removePermanentPowerUp", () => {
         createState([
           createPool({
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 150 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 150 },
             ],
             timedMagnitude: 100,
             remainingTurns: 2,
           }),
         ]),
-        violaEssenceOfDivineWeapon,
+        vioraEssenceOfDivineWeapon,
       ],
       expected: createState([
         createPool({ timedMagnitude: 100, remainingTurns: 2 }),
@@ -663,12 +663,12 @@ describe("removePermanentPowerUp", () => {
         createState([
           createPool({
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
               { source: unconditionalPermanentSource, magnitude: 75 },
             ],
           }),
         ]),
-        violaEssenceOfDivineWeapon,
+        vioraEssenceOfDivineWeapon,
       ],
       expected: createState([
         createPool({
@@ -682,7 +682,7 @@ describe("removePermanentPowerUp", () => {
       name: "ターン付き効果の付与元を指定しても影響しない",
       args: [
         createState([createPool({ timedMagnitude: 100, remainingTurns: 2 })]),
-        osvaldPriceOfMagic,
+        ozubarudoPriceOfMagic,
       ],
       expected: createState([
         createPool({ timedMagnitude: 100, remainingTurns: 2 }),
@@ -721,7 +721,7 @@ describe("elapsePowerUpTurn", () => {
         createState([
           createPool({
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
             ],
             timedMagnitude: 150,
             remainingTurns: 1,
@@ -731,7 +731,7 @@ describe("elapsePowerUpTurn", () => {
       expected: createState([
         createPool({
           permanentSources: [
-            { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+            { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
           ],
         }),
       ]),
@@ -742,7 +742,7 @@ describe("elapsePowerUpTurn", () => {
         createState([
           createPool({
             permanentSources: [
-              { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+              { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
             ],
           }),
         ]),
@@ -750,7 +750,7 @@ describe("elapsePowerUpTurn", () => {
       expected: createState([
         createPool({
           permanentSources: [
-            { source: violaEssenceOfDivineWeapon, magnitude: 100 },
+            { source: vioraEssenceOfDivineWeapon, magnitude: 100 },
           ],
         }),
       ]),

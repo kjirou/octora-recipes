@@ -112,7 +112,7 @@ export type ActiveAbilityCategory = "battleAbility" | "exAbility" | "ultimate";
 /** アクティブアビリティのデータ定義用の型。 */
 export type ActiveAbilityDataDef = Readonly<{
   category: ActiveAbilityCategory;
-  /** 一意な ID（例: `"ryukku:mixBlasterMine"`）。命名規則は lib/data/activeAbilities/index.ts を参照。 */
+  /** 一意な ID（例: `"scholar:ryukku:mixBlasterMine"`）。命名規則は lib/data/activeAbilities/index.ts を参照。 */
   id: DataId;
   /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"調合：ブラスターマイン"`）。 */
   name: string;
@@ -133,7 +133,7 @@ export type PassiveAbilityCategory = "supportAbility";
 /** パッシブアビリティのデータ定義用の型。 */
 export type PassiveAbilityDataDef = Readonly<{
   category: PassiveAbilityCategory;
-  /** 一意な ID（例: `"ryukku:albedoChieftainsDaughter"`）。命名規則は lib/data/passiveAbilities/index.ts を参照。 */
+  /** 一意な ID（例: `"scholar:ryukku:albedoChieftainsDaughter"`）。命名規則は lib/data/passiveAbilities/index.ts を参照。 */
   id: DataId;
   /** 日本語の表示名。ゲーム内の表記に合わせる（例: `"アルベド族長の娘"`）。 */
   name: string;
@@ -146,13 +146,7 @@ export type PassiveAbilityData = Readonly<Required<PassiveAbilityDataDef>>;
 export type CharacterDataDef = Readonly<{
   /** そのキャラクターが持つアクティブアビリティの ID 一覧。 */
   activeAbilityDataIds: readonly DataId[];
-  /**
-   * 英語版での表示名。
-   *
-   * - 未指定時は `null` で補完される。
-   */
-  englishName?: string | null;
-  /** 一意な ID（例: `"ryukku"`）。命名規則は lib/data/characters/index.ts を参照。 */
+  /** 一意な ID（例: `"scholar:ryukku"`）。命名規則は lib/data/characters/index.ts を参照。 */
   id: DataId;
   influence: Influence;
   job: Job;
@@ -694,7 +688,7 @@ export type StatusAilmentKindDefinition = {
 
 /** 特殊効果のマスターデータ 1 件。 */
 export type SpecialEffectDefinition = {
-  /** 一意な ID（例: `"kazan:ikkon"`）。 */
+  /** 一意な ID（例: `"scholar:kazan:ikkon"`）。 */
   id: DataId;
   /** 日本語の表示名。ゲーム内のアビリティ説明文での名称（例: 一献）。 */
   name: string;
