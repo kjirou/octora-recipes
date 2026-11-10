@@ -70,12 +70,12 @@ const timedSource1: StatusEffectSource = {
   characterId: "t",
   abilityId: "t1",
 };
-const lueckAlbedoChiefsDaughter: StatusEffectSource = {
+const ryukkuAlbedoChiefsDaughter: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "scholar:ryukku",
   abilityId: "albedoChiefsDaughter",
 };
-const lueckBlasterMine: StatusEffectSource = {
+const ryukkuBlasterMine: StatusEffectSource = {
   type: "activeAbility",
   characterId: "scholar:ryukku",
   abilityId: "blasterMine",
@@ -127,7 +127,7 @@ const finalEmpressSincerityPouch: StatusEffectSource = {
   equipmentId: "sincerityPouch",
 };
 
-const lueckBaor: StatusEffectSource = {
+const ryukkuBaor: StatusEffectSource = {
   type: "activeAbility",
   characterId: "scholar:ryukku",
   abilityId: "baor",
@@ -193,7 +193,7 @@ const createCapApplication = (
   kind: "physicalDefenseDown",
   cap: 50,
   duration: turns(3),
-  source: lueckBlasterMine,
+  source: ryukkuBlasterMine,
   ...overrides,
 });
 
@@ -218,7 +218,7 @@ const createCap = (
   kind: "physicalDefenseDown",
   cap: 50,
   remainingTurns: 3,
-  source: lueckBlasterMine,
+  source: ryukkuBlasterMine,
   ...overrides,
 });
 
@@ -387,7 +387,7 @@ const baorResistanceApplication: StatusEffectApplication = createApplication({
   kind: "elementalResistanceUp",
   magnitude: 30,
   duration: turns(2),
-  source: lueckBaor,
+  source: ryukkuBaor,
 });
 
 describe("createEmptyStatusEffectState", () => {
@@ -476,22 +476,22 @@ describe("isSameStatusEffectSource", () => {
     },
     {
       name: "パッシブアビリティはキャラとアビリティが同じなら同じ付与元",
-      args: [lueckAlbedoChiefsDaughter, { ...lueckAlbedoChiefsDaughter }],
+      args: [ryukkuAlbedoChiefsDaughter, { ...ryukkuAlbedoChiefsDaughter }],
       expected: true,
     },
     {
       name: "パッシブアビリティはキャラが違えば別の付与元",
       args: [
-        lueckAlbedoChiefsDaughter,
-        { ...lueckAlbedoChiefsDaughter, characterId: "other" },
+        ryukkuAlbedoChiefsDaughter,
+        { ...ryukkuAlbedoChiefsDaughter, characterId: "other" },
       ],
       expected: false,
     },
     {
       name: "パッシブアビリティはアビリティが違えば別の付与元",
       args: [
-        lueckAlbedoChiefsDaughter,
-        { ...lueckAlbedoChiefsDaughter, abilityId: "other" },
+        ryukkuAlbedoChiefsDaughter,
+        { ...ryukkuAlbedoChiefsDaughter, abilityId: "other" },
       ],
       expected: false,
     },
@@ -639,7 +639,7 @@ describe("getStatusEffectMagnitudeCap", () => {
       name: "複数あれば最も高い上限が有効",
       args: [
         applyAllCaps([
-          createCapApplication({ cap: 50, source: lueckBlasterMine }),
+          createCapApplication({ cap: 50, source: ryukkuBlasterMine }),
           createCapApplication({ cap: 60, source: rocbouquetTemptation }),
         ]),
         "battleAbility",
@@ -1292,7 +1292,7 @@ describe("getDamageCapUpMagnitude", () => {
     kind: "damageCapUp",
     magnitude: 100000,
     duration: turns(2),
-    source: lueckBaor,
+    source: ryukkuBaor,
   });
   /** 七英雄ロックブーケ「パッションパフューム」: ダメージ上限アップ（効果量 100000）（3 ターン） */
   const passionPerfume = createApplication({
@@ -1447,7 +1447,7 @@ describe("getDamageCapUpMagnitude", () => {
             kind: "damageCapUp",
             magnitude: 100000,
             duration: permanent,
-            source: lueckAlbedoChiefsDaughter,
+            source: ryukkuAlbedoChiefsDaughter,
           }),
         ]),
         "supportAbility",
@@ -2128,13 +2128,13 @@ describe("applyStatusEffect", () => {
             kind: "damageCapUp",
             magnitude: 100000,
             duration: turns(2),
-            source: lueckBaor,
+            source: ryukkuBaor,
           }),
           createApplication({
             kind: "damageCapUp",
             magnitude: 100000,
             duration: turns(2),
-            source: lueckBaor,
+            source: ryukkuBaor,
           }),
         ],
         expected: [
@@ -2142,7 +2142,7 @@ describe("applyStatusEffect", () => {
             kind: "damageCapUp",
             timedMagnitude: 100000,
             remainingTurns: 4,
-            timedSources: [lueckBaor],
+            timedSources: [ryukkuBaor],
           }),
         ],
       },
@@ -2352,7 +2352,7 @@ describe("applyStatusEffectMagnitudeCap", () => {
           kind: "physicalAttackUp",
           cap: 60,
           duration: permanent,
-          source: lueckAlbedoChiefsDaughter,
+          source: ryukkuAlbedoChiefsDaughter,
         }),
       ],
       expected: [
@@ -2361,7 +2361,7 @@ describe("applyStatusEffectMagnitudeCap", () => {
           kind: "physicalAttackUp",
           cap: 60,
           remainingTurns: null,
-          source: lueckAlbedoChiefsDaughter,
+          source: ryukkuAlbedoChiefsDaughter,
         }),
       ],
     },
@@ -2386,14 +2386,14 @@ describe("applyStatusEffectMagnitudeCap", () => {
     {
       name: "違う付与元は別の効果として並存する",
       applications: [
-        createCapApplication({ source: lueckBlasterMine }),
+        createCapApplication({ source: ryukkuBlasterMine }),
         createCapApplication({
           duration: turns(2),
           source: rocbouquetTemptation,
         }),
       ],
       expected: [
-        createCap({ source: lueckBlasterMine }),
+        createCap({ source: ryukkuBlasterMine }),
         createCap({ remainingTurns: 2, source: rocbouquetTemptation }),
       ],
     },
@@ -2603,24 +2603,24 @@ describe("removePermanentStatusEffect", () => {
             kind: "physicalAttackUp",
             cap: 60,
             duration: permanent,
-            source: lueckAlbedoChiefsDaughter,
+            source: ryukkuAlbedoChiefsDaughter,
           }),
           createCapApplication({
             slot: "supportAbility",
             kind: "elementalAttackUp",
             cap: 60,
             duration: permanent,
-            source: lueckAlbedoChiefsDaughter,
+            source: ryukkuAlbedoChiefsDaughter,
           }),
           createCapApplication(),
         ]),
-        lueckAlbedoChiefsDaughter,
+        ryukkuAlbedoChiefsDaughter,
       ],
       expected: createState([], [createCap()]),
     },
     {
       name: "同じ付与元でもターン付きの上限引き上げ効果は取り除かない",
-      args: [applyAllCaps([createCapApplication()]), lueckBlasterMine],
+      args: [applyAllCaps([createCapApplication()]), ryukkuBlasterMine],
       expected: createState([], [createCap()]),
     },
     {
@@ -2738,7 +2738,7 @@ describe("elapseStatusEffectTurn", () => {
         applyAllCaps([
           createCapApplication({
             duration: permanent,
-            source: lueckAlbedoChiefsDaughter,
+            source: ryukkuAlbedoChiefsDaughter,
           }),
         ]),
       ],
@@ -2747,7 +2747,7 @@ describe("elapseStatusEffectTurn", () => {
         [
           createCap({
             remainingTurns: null,
-            source: lueckAlbedoChiefsDaughter,
+            source: ryukkuAlbedoChiefsDaughter,
           }),
         ],
       ),
@@ -3007,7 +3007,7 @@ describe("ダメージ上限アップのターンをまたいだシナリオ", (
           kind: "damageCapUp",
           magnitude: 100000,
           duration: turns(2),
-          source: lueckBaor,
+          source: ryukkuBaor,
         }),
       ],
       state,

@@ -51,13 +51,13 @@ const huntressWeapon: StatusEffectSource = {
   characterId: "warrior:viora",
   equipmentId: "huntressWeapon4",
 };
-/** 無条件のターン無し効果の付与元（ヴィオラ EX とは別の付与元）。 */
+/** 無条件のターン無し効果の付与元（剣士 ヴィオラとは別の付与元）。 */
 const unconditionalPermanentSource: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "other",
   abilityId: "unconditionalPermanentPowerUp",
 };
-/** バトアビで威力アップを付与する、オズバルド EX とは別の付与元。 */
+/** バトアビで威力アップを付与する、神官 オズバルドとは別の付与元。 */
 const otherBattleAbilitySource: StatusEffectSource = {
   type: "activeAbility",
   characterId: "other",
