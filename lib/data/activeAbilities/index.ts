@@ -22,7 +22,7 @@
 //
 // ## ID の命名規則
 //
-// lib/data/passiveAbilities/ と共通の規則。ID の一意性はデータ種別の中で保証する。
+// lib/data/passiveAbilities/ と共通の規則で、本体はここに書く。ID の一意性はデータ種別の中で保証する。
 //
 // - キャラクター固有のアビリティは `<キャラクター ID>:<アビリティ名>` にする
 //   （例: `scholar:ryukku:chougouburasutaamain`）。同名のアビリティでもキャラクターが違えば別物で、
