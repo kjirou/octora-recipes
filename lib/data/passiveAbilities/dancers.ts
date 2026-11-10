@@ -4,7 +4,8 @@ import type { PassiveAbilityDataDef } from "@/lib/types";
 export const dancerPassiveAbilitiesJson = [
   // --- 七英雄ロックブーケ ---
   {
-    id: "dancer:shichieiyuurokkubuuke:alluringInvitationTomoshibi",
+    // 「誘い」の読みは「いざない」とした。
+    id: "dancer:shichieiyuurokkubuuke:miwakunoizanai",
     name: "魅惑の誘い 灯火",
     category: "supportAbility",
   },

@@ -23,17 +23,8 @@
 //
 // ## ID の命名規則
 //
-// lib/data/activeAbilities/ と共通の規則。ID の一意性はデータ種別の中で保証する。
-//
-// - lower camel case で書く
-// - キャラクター固有のアビリティは `<キャラクター ID>:<アビリティ名>` にする
-//   （例: `scholar:ryukku:albedoChieftainsDaughter`）。同名のアビリティでもキャラクターが違えば別物で、
-//   ID はデータ種別の中で一意にする必要があるため
-// - アビリティ名の部分は英訳が分かればその英訳、分からなければ日本語のローマ字にする
-//   （例: `scholar:ryukku:albedoChieftainsDaughter` は「アルベド族長の娘」の英訳）
-// - 「調合：」のような接頭辞は英訳して含める
-// - 「灯火」などの強化版は別のアビリティとして扱い、ID の末尾に付ける
-//   （例: `dancer:shichieiyuurokkubuuke:alluringInvitationTomoshibi`）
+// lib/data/activeAbilities/ と共通の規則で、本体は lib/data/activeAbilities/index.ts に書く。
+// ID の一意性はデータ種別の中で保証する（例: `scholar:ryukku:arubedozokuchounomusume`）。
 //
 // ## プロパティの記述順
 //

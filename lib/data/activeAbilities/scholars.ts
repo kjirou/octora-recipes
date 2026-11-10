@@ -14,23 +14,23 @@ export const scholarActiveAbilitiesJson = [
     category: "battleAbility",
   },
   {
-    id: "scholar:kazan:shisenHappenNoKei",
+    id: "scholar:kazan:shisenhappennokei",
     name: "四旋八焔の計",
     category: "ultimate",
   },
   // --- リュック ---
   {
-    id: "scholar:ryukku:mixBlasterMine",
+    id: "scholar:ryukku:chougouburasutaamain",
     name: "調合：ブラスターマイン",
     category: "battleAbility",
   },
   {
-    id: "scholar:ryukku:mixBaoru",
+    id: "scholar:ryukku:chougoubaooru",
     name: "調合：バオール",
     category: "battleAbility",
   },
   {
-    id: "scholar:ryukku:mixFinalElixir",
+    id: "scholar:ryukku:chougoufainaruerikusaa",
     name: "調合：ファイナルエリクサー",
     category: "ultimate",
   },

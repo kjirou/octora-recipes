@@ -34,12 +34,12 @@ const ice: PowerUpTarget = { type: "attackType", attackType: "ice" };
 const ozubarudoPriceOfMagic: StatusEffectSource = {
   type: "activeAbility",
   characterId: "cleric:ozubarudo",
-  abilityId: "priceOfMagic",
+  abilityId: "cleric:ozubarudo:daishounomajutsu",
 };
 const vioraEssenceOfDivineWeapon: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "warrior:viora",
-  abilityId: "essenceOfDivineWeapon",
+  abilityId: "warrior:viora:jinginoshinzui",
 };
 const fireAmplifier: StatusEffectSource = {
   type: "equipment",

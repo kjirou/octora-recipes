@@ -38,12 +38,12 @@ const turns = (turns: number): StatusEffectDuration => ({
 const vioraAntiAttack2: StatusEffectSource = {
   type: "activeAbility",
   characterId: "thief:viora",
-  abilityId: "antiAttack2",
+  abilityId: "thief:viora:anchiatakku2",
 };
 const terionTenso: StatusEffectSource = {
   type: "activeAbility",
   characterId: "thief:terion",
-  abilityId: "tenso",
+  abilityId: "thief:terion:tenso",
 };
 const sourceA: StatusEffectSource = {
   type: "activeAbility",
@@ -73,52 +73,52 @@ const timedSource1: StatusEffectSource = {
 const ryukkuAlbedoChiefsDaughter: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "scholar:ryukku",
-  abilityId: "albedoChiefsDaughter",
+  abilityId: "scholar:ryukku:arubedozokuchounomusume",
 };
 const ryukkuBlasterMine: StatusEffectSource = {
   type: "activeAbility",
   characterId: "scholar:ryukku",
-  abilityId: "blasterMine",
+  abilityId: "scholar:ryukku:chougouburasutaamain",
 };
 const rocbouquetTemptation: StatusEffectSource = {
   type: "activeAbility",
   characterId: "dancer:shichieiyuurokkubuuke",
-  abilityId: "temptationEx",
+  abilityId: "dancer:shichieiyuurokkubuuke:tenputeeshon",
 };
 const aagyusutoDeepGreenEnsemble: StatusEffectSource = {
   type: "activeAbility",
   characterId: "scholar:aagyusuto",
-  abilityId: "deepGreenEnsembleTorch",
+  abilityId: "scholar:aagyusuto:shinpekinoansanburu",
 };
 const vioraLikeRagingFire: StatusEffectSource = {
   type: "activeAbility",
   characterId: "warrior:viora",
-  abilityId: "likeRagingFire",
+  abilityId: "warrior:viora:buounotougirekkanogotoku",
 };
 const vioraHeirOfDivineWeapon: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "warrior:viora",
-  abilityId: "heirOfDivineWeapon",
+  abilityId: "warrior:viora:jinginokeishousha",
 };
 const soniaSaltarello: StatusEffectSource = {
   type: "activeAbility",
   characterId: "apothecary:sonia",
-  abilityId: "braveAxeSaltarello",
+  abilityId: "apothecary:sonia:yuufunosarutarero",
 };
 const morurussoLiven: StatusEffectSource = {
   type: "activeAbility",
   characterId: "dancer:morurusso",
-  abilityId: "liven",
+  abilityId: "dancer:morurusso:moriageru",
 };
 const crimsonCondemnerAura: StatusEffectSource = {
   type: "activeAbility",
   characterId: "cleric:akakidanzaisha",
-  abilityId: "auraOfRedHeartAll5",
+  abilityId: "cleric:akakidanzaisha:sekishinnooorazentai5",
 };
 const rocbouquetSingleMindedLove: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "dancer:shichieiyuurokkubuuke",
-  abilityId: "singleMindedLove",
+  abilityId: "dancer:shichieiyuurokkubuuke:ichizunaomoi",
 };
 /** 覚醒アクセサリー「真心のポーチ」。装備者（自身）にだけ掛かる。 */
 const finalEmpressSincerityPouch: StatusEffectSource = {
@@ -130,47 +130,47 @@ const finalEmpressSincerityPouch: StatusEffectSource = {
 const ryukkuBaor: StatusEffectSource = {
   type: "activeAbility",
   characterId: "scholar:ryukku",
-  abilityId: "baor",
+  abilityId: "scholar:ryukku:chougoubaooru",
 };
 const rinyuuBreathOfTheSea: StatusEffectSource = {
   type: "activeAbility",
   characterId: "dancer:rinyuu",
-  abilityId: "breathOfTheSea",
+  abilityId: "dancer:rinyuu:taikainoibuki",
 };
 const ozubarudoPriceOfMagic: StatusEffectSource = {
   type: "activeAbility",
   characterId: "cleric:ozubarudo",
-  abilityId: "priceOfMagic",
+  abilityId: "cleric:ozubarudo:daishounomajutsu",
 };
 const rocbouquetPassionPerfume: StatusEffectSource = {
   type: "activeAbility",
   characterId: "dancer:shichieiyuurokkubuuke",
-  abilityId: "passionPerfume",
+  abilityId: "dancer:shichieiyuurokkubuuke:passhonpafyuumu",
 };
 const frenziedFoolRisingRebellion: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "merchant:kyousounogusha",
-  abilityId: "risingRebellionTorch",
+  abilityId: "merchant:kyousounogusha:michiruhani",
 };
 const frenziedFoolPlundererFury: StatusEffectSource = {
   type: "activeAbility",
   characterId: "merchant:kyousounogusha",
-  abilityId: "plundererFury",
+  abilityId: "merchant:kyousounogusha:ryakudatsushanotakeri",
 };
 const frenziedFoolPlunderSpear: StatusEffectSource = {
   type: "activeAbility",
   characterId: "merchant:kyousounogusha",
-  abilityId: "plunderSpear",
+  abilityId: "merchant:kyousounogusha:goudatsunoyari",
 };
 const rocbouquetEnticingInvitation: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "dancer:shichieiyuurokkubuuke",
-  abilityId: "enticingInvitationTorch",
+  abilityId: "dancer:shichieiyuurokkubuuke:miwakunoizanai",
 };
 const rinyuuMermaidsSorrow: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "dancer:rinyuu",
-  abilityId: "mermaidsSorrow",
+  abilityId: "dancer:rinyuu:ningyonohijou",
 };
 
 /** テスト用に、省略可能な項目を埋めた付与内容を作る。 */
@@ -412,7 +412,7 @@ describe("isSameStatusEffectSource", () => {
         {
           type: "activeAbility",
           characterId: "thief:viora",
-          abilityId: "antiAttack2",
+          abilityId: "thief:viora:anchiatakku2",
         },
       ],
       expected: true,
@@ -423,12 +423,12 @@ describe("isSameStatusEffectSource", () => {
         {
           type: "activeAbility",
           characterId: "thief:kuresu",
-          abilityId: "backstab",
+          abilityId: "thief:kuresu:bakkusutabbu",
         },
         {
           type: "activeAbility",
           characterId: "thief:dyuran",
-          abilityId: "backstab",
+          abilityId: "thief:dyuran:bakkusutabbu",
         },
       ],
       expected: false,
@@ -1835,7 +1835,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "thief:kuresu",
-              abilityId: "backstab",
+              abilityId: "thief:kuresu:bakkusutabbu",
             },
           }),
           createApplication({
@@ -1844,7 +1844,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "thief:dyuran",
-              abilityId: "backstab",
+              abilityId: "thief:dyuran:bakkusutabbu",
             },
           }),
         ],
@@ -1857,12 +1857,12 @@ describe("applyStatusEffect", () => {
               {
                 type: "activeAbility",
                 characterId: "thief:kuresu",
-                abilityId: "backstab",
+                abilityId: "thief:kuresu:bakkusutabbu",
               },
               {
                 type: "activeAbility",
                 characterId: "thief:dyuran",
-                abilityId: "backstab",
+                abilityId: "thief:dyuran:bakkusutabbu",
               },
             ],
           }),
@@ -1876,7 +1876,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "hunter:kuroe",
-              abilityId: "kazakiribane",
+              abilityId: "hunter:kuroe:kazakiribane",
             },
           }),
         ),
@@ -1888,7 +1888,7 @@ describe("applyStatusEffect", () => {
               {
                 type: "activeAbility",
                 characterId: "hunter:kuroe",
-                abilityId: "kazakiribane",
+                abilityId: "hunter:kuroe:kazakiribane",
               },
             ],
           }),
@@ -1926,7 +1926,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "supporter",
-              abilityId: "hametsuNoUta",
+              abilityId: "hametsunouta",
             },
             stacksWithSameSource: true,
           }),
@@ -1935,7 +1935,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "supporter",
-              abilityId: "hametsuNoUta",
+              abilityId: "hametsunouta",
             },
             stacksWithSameSource: true,
           }),
@@ -1948,7 +1948,7 @@ describe("applyStatusEffect", () => {
               {
                 type: "activeAbility",
                 characterId: "supporter",
-                abilityId: "hametsuNoUta",
+                abilityId: "hametsunouta",
               },
             ],
           }),
@@ -1962,7 +1962,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "dancer:titi",
-              abilityId: "raijuNoUta",
+              abilityId: "dancer:titi:raijuunouta",
             },
           }),
           createApplication({
@@ -1970,7 +1970,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "dancer:titi",
-              abilityId: "raijuNoUta",
+              abilityId: "dancer:titi:raijuunouta",
               variant: "boostMax",
             },
           }),
@@ -1979,7 +1979,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "dancer:titi",
-              abilityId: "raijuNoUta",
+              abilityId: "dancer:titi:raijuunouta",
               variant: "boostMax",
             },
           }),
@@ -1992,12 +1992,12 @@ describe("applyStatusEffect", () => {
               {
                 type: "activeAbility",
                 characterId: "dancer:titi",
-                abilityId: "raijuNoUta",
+                abilityId: "dancer:titi:raijuunouta",
               },
               {
                 type: "activeAbility",
                 characterId: "dancer:titi",
-                abilityId: "raijuNoUta",
+                abilityId: "dancer:titi:raijuunouta",
                 variant: "boostMax",
               },
             ],
@@ -2012,7 +2012,7 @@ describe("applyStatusEffect", () => {
             source: {
               type: "activeAbility",
               characterId: "dancer:rinetto",
-              abilityId: "tatsujinNoKobu3",
+              abilityId: "dancer:rinetto:tatsujinnokobu3",
             },
           }),
           createApplication({
@@ -2021,8 +2021,8 @@ describe("applyStatusEffect", () => {
             duration: turns(3),
             source: {
               type: "activeAbility",
-              characterId: "dancer:purimuroze",
-              abilityId: "ultimate",
+              characterId: "dancer:rinetto",
+              abilityId: "dancer:rinetto:nadeshikonomai",
             },
           }),
         ],
@@ -2035,7 +2035,7 @@ describe("applyStatusEffect", () => {
               {
                 type: "activeAbility",
                 characterId: "dancer:rinetto",
-                abilityId: "tatsujinNoKobu3",
+                abilityId: "dancer:rinetto:tatsujinnokobu3",
               },
             ],
           }),
@@ -2047,8 +2047,8 @@ describe("applyStatusEffect", () => {
             timedSources: [
               {
                 type: "activeAbility",
-                characterId: "dancer:purimuroze",
-                abilityId: "ultimate",
+                characterId: "dancer:rinetto",
+                abilityId: "dancer:rinetto:nadeshikonomai",
               },
             ],
           }),
