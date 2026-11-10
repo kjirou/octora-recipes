@@ -35,12 +35,12 @@ const turns = (turns: number): StatusEffectDuration => ({
   turns,
 });
 
-const violaAntiAttack2: StatusEffectSource = {
+const vioraAntiAttack2: StatusEffectSource = {
   type: "activeAbility",
   characterId: "thief:viora",
   abilityId: "antiAttack2",
 };
-const therionTenso: StatusEffectSource = {
+const terionTenso: StatusEffectSource = {
   type: "activeAbility",
   characterId: "thief:terion",
   abilityId: "tenso",
@@ -85,17 +85,17 @@ const rocbouquetTemptation: StatusEffectSource = {
   characterId: "dancer:shichieiyuurokkubuuke",
   abilityId: "temptationEx",
 };
-const augusteDeepGreenEnsemble: StatusEffectSource = {
+const aagyusutoDeepGreenEnsemble: StatusEffectSource = {
   type: "activeAbility",
   characterId: "scholar:aagyusuto",
   abilityId: "deepGreenEnsembleTorch",
 };
-const violaLikeRagingFire: StatusEffectSource = {
+const vioraLikeRagingFire: StatusEffectSource = {
   type: "activeAbility",
   characterId: "warrior:viora",
   abilityId: "likeRagingFire",
 };
-const violaHeirOfDivineWeapon: StatusEffectSource = {
+const vioraHeirOfDivineWeapon: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "warrior:viora",
   abilityId: "heirOfDivineWeapon",
@@ -105,7 +105,7 @@ const soniaSaltarello: StatusEffectSource = {
   characterId: "apothecary:sonia",
   abilityId: "braveAxeSaltarello",
 };
-const molussoLiven: StatusEffectSource = {
+const morurussoLiven: StatusEffectSource = {
   type: "activeAbility",
   characterId: "dancer:morurusso",
   abilityId: "liven",
@@ -132,12 +132,12 @@ const ryukkuBaor: StatusEffectSource = {
   characterId: "scholar:ryukku",
   abilityId: "baor",
 };
-const linyuBreathOfTheSea: StatusEffectSource = {
+const rinyuuBreathOfTheSea: StatusEffectSource = {
   type: "activeAbility",
   characterId: "dancer:rinyuu",
   abilityId: "breathOfTheSea",
 };
-const osvaldPriceOfMagic: StatusEffectSource = {
+const ozubarudoPriceOfMagic: StatusEffectSource = {
   type: "activeAbility",
   characterId: "cleric:ozubarudo",
   abilityId: "priceOfMagic",
@@ -167,7 +167,7 @@ const rocbouquetEnticingInvitation: StatusEffectSource = {
   characterId: "dancer:shichieiyuurokkubuuke",
   abilityId: "enticingInvitationTorch",
 };
-const linyuMermaidsSorrow: StatusEffectSource = {
+const rinyuuMermaidsSorrow: StatusEffectSource = {
   type: "passiveAbility",
   characterId: "dancer:rinyuu",
   abilityId: "mermaidsSorrow",
@@ -181,7 +181,7 @@ const createApplication = (
   kind: "physicalAttackDown",
   magnitude: 20,
   duration: turns(2),
-  source: violaAntiAttack2,
+  source: vioraAntiAttack2,
   ...overrides,
 });
 
@@ -249,7 +249,7 @@ const applyAllCaps = (
   );
 
 /**
- * 踊子 リンユウEX「大海の息吹」（200% 発動時）: 味方前後衛全体に「氷・風・光属性」のいずれかで攻撃時
+ * 踊子 リンユウ「大海の息吹」（200% 発動時）: 味方前後衛全体に「氷・風・光属性」のいずれかで攻撃時
  * ダメージ上限アップ（効果量 100000）（6 ターン）。攻撃種別ごとに 1 つずつ付与する。
  */
 const breathOfTheSeaApplications: StatusEffectApplication[] = (
@@ -260,7 +260,7 @@ const breathOfTheSeaApplications: StatusEffectApplication[] = (
     kind,
     magnitude: 100000,
     duration: turns(6),
-    source: linyuBreathOfTheSea,
+    source: rinyuuBreathOfTheSea,
   }),
 );
 
@@ -349,7 +349,7 @@ const enticingInvitationCaps: StatusEffectMagnitudeCapApplication[] = (
   }),
 );
 
-/** 踊子 リンユウEX「人魚の悲情」: 敵全体に氷・風・光耐性ダウン 30%（3 ターン）。 */
+/** 踊子 リンユウ「人魚の悲情」: 敵全体に氷・風・光耐性ダウン 30%（3 ターン）。 */
 const mermaidsSorrowApplications: StatusEffectApplication[] = (
   ["iceResistanceDown", "windResistanceDown", "lightResistanceDown"] as const
 ).map((kind) =>
@@ -358,12 +358,12 @@ const mermaidsSorrowApplications: StatusEffectApplication[] = (
     kind,
     magnitude: 30,
     duration: turns(3),
-    source: linyuMermaidsSorrow,
+    source: rinyuuMermaidsSorrow,
   }),
 );
 
 /**
- * 踊子 リンユウEX「人魚の悲情」: バトアビによる / サポアビと装備性能による 氷・風・光耐性ダウンを
+ * 踊子 リンユウ「人魚の悲情」: バトアビによる / サポアビと装備性能による 氷・風・光耐性ダウンを
  * 受けた際の上限が 50% になる効果（3 ターン）。3 種別 × 2 枠の 6 件。
  */
 const mermaidsSorrowCaps: StatusEffectMagnitudeCapApplication[] = (
@@ -377,7 +377,7 @@ const mermaidsSorrowCaps: StatusEffectMagnitudeCapApplication[] = (
       kind,
       cap: 50,
       duration: turns(3),
-      source: linyuMermaidsSorrow,
+      source: rinyuuMermaidsSorrow,
     }),
   ),
 );
@@ -408,7 +408,7 @@ describe("isSameStatusEffectSource", () => {
     {
       name: "キャラとアビリティが同じなら同じ付与元",
       args: [
-        violaAntiAttack2,
+        vioraAntiAttack2,
         {
           type: "activeAbility",
           characterId: "thief:viora",
@@ -436,7 +436,7 @@ describe("isSameStatusEffectSource", () => {
     {
       name: "同じキャラでもアビリティが違えば別の付与元",
       args: [
-        violaAntiAttack2,
+        vioraAntiAttack2,
         {
           type: "activeAbility",
           characterId: "thief:viora",
@@ -447,14 +447,14 @@ describe("isSameStatusEffectSource", () => {
     },
     {
       name: "区別が片方にだけあれば別の付与元",
-      args: [violaAntiAttack2, { ...violaAntiAttack2, variant: "boostMax" }],
+      args: [vioraAntiAttack2, { ...vioraAntiAttack2, variant: "boostMax" }],
       expected: false,
     },
     {
       name: "区別まで同じなら同じ付与元",
       args: [
-        { ...violaAntiAttack2, variant: "boostMax" },
-        { ...violaAntiAttack2, variant: "boostMax" },
+        { ...vioraAntiAttack2, variant: "boostMax" },
+        { ...vioraAntiAttack2, variant: "boostMax" },
       ],
       expected: true,
     },
@@ -551,7 +551,7 @@ describe("findStatusEffectPool", () => {
       expected: createPool({
         timedMagnitude: 20,
         remainingTurns: 2,
-        timedSources: [violaAntiAttack2],
+        timedSources: [vioraAntiAttack2],
       }),
     },
     {
@@ -798,7 +798,7 @@ describe("listApplicableDamageUpKinds", () => {
 });
 
 describe("getDamageUpMagnitude", () => {
-  /** 剣士 ヴィオラEX「神器の継承者」: サポアビと装備性能による物理ダメージアップの上限が 50% */
+  /** 剣士 ヴィオラ「神器の継承者」: サポアビと装備性能による物理ダメージアップの上限が 50% */
   const heirOfDivineWeaponCaps: StatusEffectMagnitudeCapApplication[] = (
     [
       "axeDamageUp",
@@ -816,7 +816,7 @@ describe("getDamageUpMagnitude", () => {
       kind,
       cap: 50,
       duration: permanent,
-      source: violaHeirOfDivineWeapon,
+      source: vioraHeirOfDivineWeapon,
     }),
   );
 
@@ -832,7 +832,7 @@ describe("getDamageUpMagnitude", () => {
           createApplication({
             kind: "iceDamageUp",
             magnitude: 15,
-            source: augusteDeepGreenEnsemble,
+            source: aagyusutoDeepGreenEnsemble,
           }),
         ]),
         "battleAbility",
@@ -848,7 +848,7 @@ describe("getDamageUpMagnitude", () => {
           createApplication({
             kind: "iceDamageUp",
             magnitude: 15,
-            source: augusteDeepGreenEnsemble,
+            source: aagyusutoDeepGreenEnsemble,
           }),
         ]),
         "battleAbility",
@@ -865,7 +865,7 @@ describe("getDamageUpMagnitude", () => {
             kind: "physicalDamageUp",
             magnitude: 30,
             duration: turns(3),
-            source: violaLikeRagingFire,
+            source: vioraLikeRagingFire,
           }),
         ]),
         "battleAbility",
@@ -881,7 +881,7 @@ describe("getDamageUpMagnitude", () => {
           createApplication({
             kind: "physicalDamageUp",
             magnitude: 30,
-            source: violaLikeRagingFire,
+            source: vioraLikeRagingFire,
           }),
         ]),
         "battleAbility",
@@ -921,7 +921,7 @@ describe("getDamageUpMagnitude", () => {
             kind: "physicalDamageUp",
             magnitude: 30,
             duration: turns(3),
-            source: violaLikeRagingFire,
+            source: vioraLikeRagingFire,
           }),
         ]),
         "battleAbility",
@@ -943,7 +943,7 @@ describe("getDamageUpMagnitude", () => {
             kind: "damageUp",
             magnitude: 15,
             duration: turns(3),
-            source: molussoLiven,
+            source: morurussoLiven,
           }),
         ]),
         "battleAbility",
@@ -981,7 +981,7 @@ describe("getDamageUpMagnitude", () => {
             kind: "damageUp",
             magnitude: 15,
             duration: turns(3),
-            source: molussoLiven,
+            source: morurussoLiven,
           }),
         ]),
         "battleAbility",
@@ -1348,7 +1348,7 @@ describe("getDamageCapUpMagnitude", () => {
             kind: "damageCapUp",
             magnitude: 30000,
             duration: turns(2),
-            source: osvaldPriceOfMagic,
+            source: ozubarudoPriceOfMagic,
           }),
           baor,
         ]),
@@ -1478,7 +1478,7 @@ describe("getDamageCapUpMagnitude", () => {
           createApplication({
             kind: "damageUp",
             magnitude: 15,
-            source: molussoLiven,
+            source: morurussoLiven,
           }),
         ]),
         "battleAbility",
@@ -1797,7 +1797,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSources: [violaAntiAttack2],
+            timedSources: [vioraAntiAttack2],
           }),
         ],
       },
@@ -1808,7 +1808,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 20,
             remainingTurns: 4,
-            timedSources: [violaAntiAttack2],
+            timedSources: [vioraAntiAttack2],
           }),
         ],
       },
@@ -1816,13 +1816,13 @@ describe("applyStatusEffect", () => {
         name: "違う付与元を重ねると効果量が加算される（アンチアタックⅡ 20% + 天鼠 15%）",
         applications: [
           createApplication(),
-          createApplication({ magnitude: 15, source: therionTenso }),
+          createApplication({ magnitude: 15, source: terionTenso }),
         ],
         expected: [
           createPool({
             timedMagnitude: 35,
             remainingTurns: 4,
-            timedSources: [violaAntiAttack2, therionTenso],
+            timedSources: [vioraAntiAttack2, terionTenso],
           }),
         ],
       },
@@ -1901,7 +1901,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 20,
             remainingTurns: 9,
-            timedSources: [violaAntiAttack2],
+            timedSources: [vioraAntiAttack2],
           }),
         ],
       },
@@ -1914,7 +1914,7 @@ describe("applyStatusEffect", () => {
           createPool({
             timedMagnitude: 40,
             remainingTurns: 9,
-            timedSources: [violaAntiAttack2],
+            timedSources: [vioraAntiAttack2],
           }),
         ],
       },
@@ -2065,13 +2065,13 @@ describe("applyStatusEffect", () => {
             kind: "physicalAttackDown",
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSources: [violaAntiAttack2],
+            timedSources: [vioraAntiAttack2],
           }),
           createPool({
             kind: "elementalAttackDown",
             timedMagnitude: 20,
             remainingTurns: 2,
-            timedSources: [violaAntiAttack2],
+            timedSources: [vioraAntiAttack2],
           }),
         ],
       },
@@ -2157,7 +2157,7 @@ describe("applyStatusEffect", () => {
             kind,
             timedMagnitude: 100000,
             remainingTurns: 6,
-            timedSources: [linyuBreathOfTheSea],
+            timedSources: [rinyuuBreathOfTheSea],
           }),
         ),
       },
@@ -2669,7 +2669,7 @@ describe("elapseStatusEffectTurn", () => {
         createPool({
           timedMagnitude: 20,
           remainingTurns: 2,
-          timedSources: [violaAntiAttack2],
+          timedSources: [vioraAntiAttack2],
         }),
         createPool({
           slot: "ultimate",
@@ -2958,13 +2958,13 @@ describe("ダメージアップのターンをまたいだシナリオ", () => {
         kind: "damageUp",
         magnitude: 15,
         duration: turns(3),
-        source: molussoLiven,
+        source: morurussoLiven,
       }),
       createApplication({
         kind: "iceDamageUp",
         magnitude: 15,
         duration: turns(2),
-        source: augusteDeepGreenEnsemble,
+        source: aagyusutoDeepGreenEnsemble,
       }),
     ]);
     expect(readIce(state)).toBe(30);
@@ -2994,7 +2994,7 @@ describe("ダメージ上限アップのターンをまたいだシナリオ", (
         kind: "damageCapUp",
         magnitude: 30000,
         duration: turns(2),
-        source: osvaldPriceOfMagic,
+        source: ozubarudoPriceOfMagic,
       }),
     ]);
     expect(readSword(state)).toBe(30000);
