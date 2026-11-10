@@ -1925,7 +1925,7 @@ describe("applyStatusEffect", () => {
             magnitude: 10,
             source: {
               type: "activeAbility",
-              characterId: "dancer:furanchesuka",
+              characterId: "supporter",
               abilityId: "hametsuNoUta",
             },
             stacksWithSameSource: true,
@@ -1934,7 +1934,7 @@ describe("applyStatusEffect", () => {
             magnitude: 10,
             source: {
               type: "activeAbility",
-              characterId: "dancer:furanchesuka",
+              characterId: "supporter",
               abilityId: "hametsuNoUta",
             },
             stacksWithSameSource: true,
@@ -1947,7 +1947,7 @@ describe("applyStatusEffect", () => {
             timedSources: [
               {
                 type: "activeAbility",
-                characterId: "dancer:furanchesuka",
+                characterId: "supporter",
                 abilityId: "hametsuNoUta",
               },
             ],
